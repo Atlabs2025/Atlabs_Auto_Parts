@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_product_group,access_product_group,model_product_group,base.group_user,1,1,1,1
+access_product_sub_group,access_product_sub_group,model_product_sub_group,base.group_user,1,1,1,1
+access_fleet_oe_number,access_fleet_oe_number,model_fleet_oe_number,base.group_user,1,1,1,1
+access_product_oe_line,access_product_oe_line,model_product_oe_line,base.group_user,1,1,1,1
+access_product_characteristic_line,access_product_characteristic_line,model_product_characteristic_line,base.group_user,1,1,1,1
+access_product_technical_data,access_product_technical_data,model_product_technical_data,base.group_user,1,1,1,1
