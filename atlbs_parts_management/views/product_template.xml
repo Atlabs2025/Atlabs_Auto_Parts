@@ -61,4 +61,15 @@
             </xpath>
         </field>
     </record>
+    <record id="view_product_template_search_custom" model="ir.ui.view">
+    <field name="name">product.template.search</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_search_view"/>
+    <field name="arch" type="xml">
+        <xpath expr="//search" position="inside">
+            <field name="oe_number_names" string="OE Number"/>
+        </xpath>
+    </field>
+</record>
+
 </odoo>

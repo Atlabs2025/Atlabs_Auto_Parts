@@ -30,6 +30,17 @@ class ProductTemplate(models.Model):
         string='Technical Data'
     )
 
+    oe_number_names = fields.Char(
+        string="OE Numbers",
+        compute="_compute_oe_number_names",
+        store=True
+    )
+
+    @api.depends('oe_number_line_ids.oe_number_id.name')
+    def _compute_oe_number_names(self):
+        for rec in self:
+            oe_names = rec.oe_number_line_ids.mapped('oe_number_id.name')
+            rec.oe_number_names = ', '.join(oe_names)
 
     # def name_get(self):
     #     result = []
