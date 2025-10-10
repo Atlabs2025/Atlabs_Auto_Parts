@@ -1,4 +1,4 @@
-from odoo import models, api
+from odoo import models,fields, api
 
 class MaterialPurchaseRequisition(models.Model):
     _inherit = 'material.purchase.requisition'
@@ -13,7 +13,7 @@ class MaterialPurchaseRequisition(models.Model):
     #         res['employee_id'] = employee.id
     #     return res
 
-    # employee_id = fields.Many2one('hr.employee', string='Employee')
+    employee_id = fields.Many2one('hr.employee', string='Employee')
     # job_card_id = fields.Many2one('job.card.management', string='Job Card')
     # job_number = fields.Char(string='Job Number')
     # from_job_card_origin = fields.Boolean(string='From Job Card Origin')
@@ -27,3 +27,4 @@ class MaterialPurchaseRequisition(models.Model):
         if employee:
             res['employee_id'] = employee.id
         return res
+

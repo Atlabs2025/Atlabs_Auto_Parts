@@ -281,10 +281,39 @@ class MaterialPurchaseRequisition(models.Model):
     #         if manager_mail_template:
     #             manager_mail_template.send_mail(rec.id)
 
+    # def requisition_confirm(self):
+    #     for rec in self:
+    #         manager_mail_template = self.env.ref(
+    #             'material_purchase_requisitions.email_confirm_material_purchase_requistion')
+    #         rec.employee_confirm_id = rec.employee_id.id
+    #         rec.confirm_date = fields.Date.today()
+    #         rec.state = 'dept_confirm'
+    #
+    #         # ✅ Only update job.card.material.request if requisition is approved
+    #         if rec.state == 'approve' and rec.job_card_id:
+    #             job_card_material_requests = self.env['job.card.material.request'].search([
+    #                 ('job_card_id', '=', rec.job_card_id.id),
+    #                 ('state', '=', 'pending')
+    #             ])
+    #             for request in job_card_material_requests:
+    #                 request.state = 'completed'
+    #
+    #         if manager_mail_template:
+    #             manager_mail_template.send_mail(rec.id)
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'material.purchase.requisition',
+    #         'res_id': rec.id,
+    #         'view_mode': 'form',
+    #         'target': 'new',  # Keep it as popup
+    #     }
+# removed pop up told by habeeb sir on oct 10
     def requisition_confirm(self):
         for rec in self:
             manager_mail_template = self.env.ref(
-                'material_purchase_requisitions.email_confirm_material_purchase_requistion')
+                'material_purchase_requisitions.email_confirm_material_purchase_requistion',
+                raise_if_not_found=False
+            )
             rec.employee_confirm_id = rec.employee_id.id
             rec.confirm_date = fields.Date.today()
             rec.state = 'dept_confirm'
@@ -300,13 +329,10 @@ class MaterialPurchaseRequisition(models.Model):
 
             if manager_mail_template:
                 manager_mail_template.send_mail(rec.id)
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'material.purchase.requisition',
-            'res_id': rec.id,
-            'view_mode': 'form',
-            'target': 'new',  # Keep it as popup
-        }
+
+        # ✅ Don’t return an action — just return True to stay on the same form
+        return True
+
     #@api.multi
     def requisition_reject(self):
         for rec in self:
