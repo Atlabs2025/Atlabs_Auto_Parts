@@ -112,6 +112,8 @@ Email notifications to Department Manager, Requisition Manager for approval.
         'views/hr_employee_view.xml',
         'views/hr_department_view.xml',
         'views/stock_picking_view.xml',
+        'views/material_requisition.xml',
+
         # 'views/purchase_order.xml',
     ],
     'installable' : True,

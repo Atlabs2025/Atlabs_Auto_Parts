@@ -1,0 +1,17 @@
+<odoo>
+
+<record id="action_material_requisition_form" model="ir.actions.act_window">
+    <field name="name">Create Material Requisition</field>
+    <field name="res_model">material.purchase.requisition</field>
+    <field name="view_mode">form</field>
+    <field name="target">current</field>
+    <!-- just pass uid to Python for processing -->
+    <field name="context">{'default_employee_uid': uid}</field>
+</record>
+
+<menuitem id="menu_material_requisition"
+          name="Create Material Requisition"
+          parent="stock.menu_stock_root"
+          action="action_material_requisition_form"
+          sequence="15"/>
+</odoo>
