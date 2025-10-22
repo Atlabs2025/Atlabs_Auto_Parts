@@ -20,7 +20,6 @@ class MaterialPurchaseRequisition(models.Model):
 
     @api.model
     def default_get(self, fields_list):
-        """Automatically set logged-in employee when form opens"""
         res = super().default_get(fields_list)
         uid = self.env.uid
         employee = self.env['hr.employee'].search([('user_id', '=', uid)], limit=1)

@@ -10,7 +10,8 @@
                     <header>
                         <button name="requisition_confirm" type="object" string="Confirm" state="draft" class="btn-primary" groups="base.group_user"/>
                         <button name="manager_approve" type="object" string="Department Approve" state="dept_confirm" class="btn-primary" groups="material_purchase_requisitions.group_purchase_requisition_department"/>
-                        <button name="user_approve" type="object" string="Approve" state="ir_approve" class="btn-primary" groups="material_purchase_requisitions.group_purchase_requisition_user"/>
+<!--                        <button name="user_approve" type="object" string="Approve" state="ir_approve" class="btn-primary" groups="material_purchase_requisitions.group_purchase_requisition_user"/>-->
+                        <button name="user_approve" type="object" string="Approve" state="ir_approve" class="btn-primary" groups="material_purchase_requisitions.group_purchase_requisition_manager"/>
                         <button name="request_stock" type="object" string="Create Picking and PO" state="approve" class="btn-primary" groups="material_purchase_requisitions.group_purchase_requisition_user" invisible="1"/>
                         <button name="action_received" type="object" string="Received" state="stock" class="btn-primary" invisible="1"/>
                         <button name="requisition_reject" type="object" string="Reject" groups="material_purchase_requisitions.group_purchase_requisition_department,material_purchase_requisitions.group_purchase_requisition_user" state="dept_confirm,approve,ir_approve" />

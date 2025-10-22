@@ -375,13 +375,36 @@ class MaterialPurchaseRequisition(models.Model):
     #             for request in job_card_material_requests:
     #                 request.state = 'completed'
 
+    # def user_approve(self):
+    #     for rec in self:
+    #         rec.userrapp_date = fields.Date.today()
+    #         rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+    #         rec.state = 'approve'
+    #
+    #         # ✅ Safely check if job_card_id exists
+    #         if rec.job_card_id:
+    #             job_card_material_requests = self.env['job.card.material.request'].search([
+    #                 ('state', '=', 'pending')
+    #             ])
+    #             for request in job_card_material_requests:
+    #                 request.state = 'completed'
+
+    from odoo.exceptions import UserError
+ # changed user approve function on oct 22 because if stock not available it should show popup so if need refer abobe old function
     def user_approve(self):
         for rec in self:
+            # 🔹 Check material lines for stock availability
+            for line in rec.requisition_line_ids:
+                if line.stock_qty <= 0:
+                    raise UserError(
+                        f"Cannot approve because the stock for product '{line.product_id.display_name}' is not available.")
+
+            # ✅ If stock is fine, proceed with approval
             rec.userrapp_date = fields.Date.today()
             rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
             rec.state = 'approve'
 
-            # ✅ Safely check if job_card_id exists
+            # ✅ If job_card_id exists, update related requests
             if rec.job_card_id:
                 job_card_material_requests = self.env['job.card.material.request'].search([
                     ('state', '=', 'pending')
