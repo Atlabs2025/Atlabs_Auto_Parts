@@ -13,6 +13,7 @@
     'views/product_template.xml',
     'views/fleet_vehicle.xml',
     'views/sale_order.xml',
+    'views/list_view.xml',
 
 
 ],
