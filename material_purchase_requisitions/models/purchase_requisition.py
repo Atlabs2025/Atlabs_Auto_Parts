@@ -16,7 +16,11 @@ class MaterialPurchaseRequisition(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']      # odoo11
     _order = 'id desc'
 
-
+    vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
+    requisition_deadline_type = fields.Selection([
+        ('normal', 'Normal'),
+        ('urgent', 'Urgent'),
+    ], string='Requisition Deadline Type', default='normal', tracking=True)
 
     #@api.multi
     def unlink(self):
@@ -104,12 +108,20 @@ class MaterialPurchaseRequisition(models.Model):
         string='Purchase Requisitions Line',
         copy=True,
     )
+    # date_end = fields.Date(
+    #     string='Requisition Deadline',
+    #     readonly=True,
+    #     help='Last date for the product to be needed',
+    #     copy=True,
+    # )
+
     date_end = fields.Date(
-        string='Requisition Deadline', 
-        readonly=True,
+        string='Requisition Deadline',
         help='Last date for the product to be needed',
         copy=True,
     )
+
+
     date_done = fields.Date(
         string='Date Done', 
         readonly=True, 
@@ -134,9 +146,14 @@ class MaterialPurchaseRequisition(models.Model):
         readonly=True,
         copy=False,
     )
+    # receive_date = fields.Date(
+    #     string='Received Date',
+    #     readonly=True,
+    #     copy=False,
+    # )
+
     receive_date = fields.Date(
         string='Received Date',
-        readonly=True,
         copy=False,
     )
     reason = fields.Text(

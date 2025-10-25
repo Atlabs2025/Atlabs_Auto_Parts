@@ -36,6 +36,11 @@ class MaterialPurchaseRequisitionLine(models.Model):
         string='Unit of Measure',
         required=True,
     )
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account',
+        string='Analytic Account',
+        copy=True,
+    )
     partner_id = fields.Many2many(
         'res.partner',
         string='Vendors',

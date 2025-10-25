@@ -98,6 +98,7 @@ Email notifications to Department Manager, Requisition Manager for approval.
                 'stock',
                 'hr',
                 'purchase',
+                'fleet',
 
                 ],
     'data':[
