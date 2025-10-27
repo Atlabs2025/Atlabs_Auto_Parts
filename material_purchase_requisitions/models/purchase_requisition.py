@@ -213,6 +213,9 @@ class MaterialPurchaseRequisition(models.Model):
     # job_number = fields.Char(string="Job Number", compute="_compute_job_number", store=True)
     job_number = fields.Char(string="Car ID", store=True)
 
+    rfq_created = fields.Boolean(string="RFQ Created", default=False)
+
+
     @api.model
     def create(self, vals):
         name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
@@ -274,6 +277,9 @@ class MaterialPurchaseRequisition(models.Model):
                 'product_qty': line.qty,
                 'price_unit': line.cost_price or 0.0,
             }))
+
+        # new boolean field added
+        self.rfq_created = True
 
         return {
             'type': 'ir.actions.act_window',

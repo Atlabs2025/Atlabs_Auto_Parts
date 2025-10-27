@@ -18,7 +18,8 @@
                         <button name="requisition_reject" type="object" string="Reject" groups="material_purchase_requisitions.group_purchase_requisition_department,material_purchase_requisitions.group_purchase_requisition_user" state="dept_confirm,approve,ir_approve" />
                         <button name="action_cancel" type="object" state="draft" string="Cancel" groups="base.group_user"/>
                         <button name="reset_draft" type="object" string="Reset to Draft" state="cancel,reject,receive" class="btn-primary"/>
-                        <button name="action_open_rfq_form" type="object" string="RFQ" class="btn-primary" invisible="state != 'dept_confirm'"/>
+                        <button name="action_open_rfq_form" type="object" string="RFQ" class="btn-primary" invisible="state != 'dept_confirm' or rfq_created == True"/>
+                       
 
                         <field name="state" widget="statusbar" string="confirm"  
                                         statusbar_visible="draft,dept_confirm,ir_approve,approve"/>
@@ -27,8 +28,10 @@
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" type="object" icon="fa-truck"
                                 name="show_picking" string="Internal Picking" groups="base.group_user"/>
+<!--                        <button class="oe_stat_button" type="object" icon="fa-book"-->
+<!--                                name="action_show_po" string="Purchase Order"/>-->
                         <button class="oe_stat_button" type="object" icon="fa-book"
-                                name="action_show_po" string="Purchase Order"/>
+                                name="action_show_po" string="Purchase Order" invisible="1"/>
                     </div>
                     <div class="oe_title">
                         <div class="oe_title">
