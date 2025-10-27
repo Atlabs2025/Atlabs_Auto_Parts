@@ -282,6 +282,8 @@ class MaterialPurchaseRequisition(models.Model):
             'target': 'current',
             'context': {
                 'default_line_ids': rfq_line_vals,
+                'default_vehicle_id': self.vehicle_id.id if self.vehicle_id else False,
+                'default_vin_sn': self.vin_sn or False,
             },
         }
 

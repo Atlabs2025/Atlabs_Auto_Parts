@@ -27,6 +27,9 @@ class RFQRequest(models.Model):
         compute='_compute_rfq_count'
     )
 
+    vehicle_id = fields.Many2one('fleet.vehicle', string="Vehicle")
+    vin_sn = fields.Char(string="VIN Number")
+
 
     @api.model
     def create(self, vals):
@@ -46,7 +49,9 @@ class RFQRequest(models.Model):
             for supplier in rec.supplier_ids:
                 po_vals = {
                     'partner_id': supplier.id,
-                    'rfq_request_id': rec.id,  # ✅ Link to RFQ
+                    'rfq_request_id': rec.id,
+                    'vehicle_id': rec.vehicle_id.id if rec.vehicle_id else False,
+                    'vin_sn': rec.vin_sn or False,
                     'order_line': [],
                 }
 
@@ -56,7 +61,8 @@ class RFQRequest(models.Model):
                         'product_id': line.product_id.id,
                         'name': line.product_id.display_name,
                         'product_qty': line.product_qty,
-                        'price_unit': line.price_unit,
+                        # 'price_unit': line.price_unit,
+                        'price_unit': 0.0,
                         'date_planned': fields.Date.today(),
                     }))
                 po_vals['order_line'] = order_lines

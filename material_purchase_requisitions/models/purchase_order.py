@@ -12,6 +12,9 @@ class PurchaseOrder(models.Model):
         copy=False
     )
 
+    vehicle_id = fields.Many2one('fleet.vehicle', string='Vehicle')
+    vin_sn = fields.Char(string='VIN/SN')
+
     # department = fields.Selection([
     #     ('labour', 'Labour'),
     #     ('parts', 'Parts'),
