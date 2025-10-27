@@ -17,10 +17,13 @@ class MaterialPurchaseRequisition(models.Model):
     _order = 'id desc'
 
     vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
+    vin_sn = fields.Char(string="VIN Number")
     requisition_deadline_type = fields.Selection([
         ('normal', 'Normal'),
         ('urgent', 'Urgent'),
     ], string='Requisition Deadline Type', default='normal', tracking=True)
+
+
 
     #@api.multi
     def unlink(self):
@@ -206,18 +209,18 @@ class MaterialPurchaseRequisition(models.Model):
         copy=False,
     )
 
-    job_card_id = fields.Many2one('job.card.management', string="Job Card")
+    # job_card_id = fields.Many2one('job.card.management', string="Job Card")
     # job_number = fields.Char(string="Job Number", compute="_compute_job_number", store=True)
-    job_number = fields.Char(string="Job Number", store=True)
+    job_number = fields.Char(string="Car ID", store=True)
 
-    # @api.model
-    # def create(self, vals):
-    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
-    #     vals.update({
-    #         'name': name
-    #         })
-    #     res = super(MaterialPurchaseRequisition, self).create(vals)
-    #     return res
+    @api.model
+    def create(self, vals):
+        name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
+        vals.update({
+            'name': name
+            })
+        res = super(MaterialPurchaseRequisition, self).create(vals)
+        return res
 
     # @api.model
     # def create(self, vals):
@@ -238,30 +241,74 @@ class MaterialPurchaseRequisition(models.Model):
     #
     #     return res
 
-    @api.model
-    def create(self, vals):
-        name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
-        vals.update({'name': name})
+    # def action_open_rfq_form(self):
+    #     self.ensure_one()
+    #
+    #     rfq_line_vals = [(0, 0, {
+    #         'product_id': line.product_id.id,
+    #         'product_qty': line.qty,
+    #         'price_unit': line.cost_price or 0.0,
+    #     }) for line in self.requisition_line_ids]  # ✅ Correct field name
+    #
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'rfq.request',
+    #         'view_mode': 'form',
+    #         'target': 'current',
+    #         'context': {
+    #             'default_line_ids': rfq_line_vals,
+    #         },
+    #     }
 
-        # Create the requisition record
-        res = super(MaterialPurchaseRequisition, self).create(vals)
+    def action_open_rfq_form(self):
+        self.ensure_one()
 
-        # Ensure job_card_id exists
-        if res.job_card_id:
-            # Loop through each requisition line and create a material request line
-            for line in res.requisition_line_ids:
-                self.env['job.card.material.request'].create({
-                    # 'job_card_id': res.job_card_id.id,
-                    'employee_id': res.employee_id.id,
-                    'request_date': res.request_date,
-                    'requisition_type': line.requisition_type,
-                    'product_id': line.product_id.id,
-                    'description': line.description,
-                    'qty': line.qty,
-                    'uom': line.uom.id,
-                })
+        rfq_line_vals = []
+        for line in self.requisition_line_ids:
+            # ✅ Ensure product exists (avoid NewId errors)
+            if not line.product_id or not line.product_id.id:
+                continue
 
-        return res
+            rfq_line_vals.append((0, 0, {
+                'product_id': line.product_id.id,
+                'product_qty': line.qty,
+                'price_unit': line.cost_price or 0.0,
+            }))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'rfq.request',
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {
+                'default_line_ids': rfq_line_vals,
+            },
+        }
+
+    # @api.model
+    # def create(self, vals):
+    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
+    #     vals.update({'name': name})
+    #
+    #     # Create the requisition record
+    #     res = super(MaterialPurchaseRequisition, self).create(vals)
+    #
+    #     # Ensure job_card_id exists
+    #     if res.job_card_id:
+    #         # Loop through each requisition line and create a material request line
+    #         for line in res.requisition_line_ids:
+    #             self.env['job.card.material.request'].create({
+    #                 # 'job_card_id': res.job_card_id.id,
+    #                 'employee_id': res.employee_id.id,
+    #                 'request_date': res.request_date,
+    #                 'requisition_type': line.requisition_type,
+    #                 'product_id': line.product_id.id,
+    #                 'description': line.description,
+    #                 'qty': line.qty,
+    #                 'uom': line.uom.id,
+    #             })
+    #
+    #     return res
 
 
     #@api.multi
@@ -325,29 +372,48 @@ class MaterialPurchaseRequisition(models.Model):
     #         'target': 'new',  # Keep it as popup
     #     }
 # removed pop up told by habeeb sir on oct 10
+#     def requisition_confirm(self):
+#         for rec in self:
+#             manager_mail_template = self.env.ref(
+#                 'material_purchase_requisitions.email_confirm_material_purchase_requistion',
+#                 raise_if_not_found=False
+#             )
+#             rec.employee_confirm_id = rec.employee_id.id
+#             rec.confirm_date = fields.Date.today()
+#             rec.state = 'dept_confirm'
+#
+#             # ✅ Only update job.card.material.request if requisition is approved
+#             if rec.state == 'approve' and rec.job_card_id:
+#                 job_card_material_requests = self.env['job.card.material.request'].search([
+#                     ('job_card_id', '=', rec.job_card_id.id),
+#                     ('state', '=', 'pending')
+#                 ])
+#                 for request in job_card_material_requests:
+#                     request.state = 'completed'
+#
+#             if manager_mail_template:
+#                 manager_mail_template.send_mail(rec.id)
+#
+#         # ✅ Don’t return an action — just return True to stay on the same form
+#         return True
+
     def requisition_confirm(self):
         for rec in self:
             manager_mail_template = self.env.ref(
                 'material_purchase_requisitions.email_confirm_material_purchase_requistion',
                 raise_if_not_found=False
             )
+
+            # ✅ Set confirmation details
             rec.employee_confirm_id = rec.employee_id.id
             rec.confirm_date = fields.Date.today()
             rec.state = 'dept_confirm'
 
-            # ✅ Only update job.card.material.request if requisition is approved
-            if rec.state == 'approve' and rec.job_card_id:
-                job_card_material_requests = self.env['job.card.material.request'].search([
-                    ('job_card_id', '=', rec.job_card_id.id),
-                    ('state', '=', 'pending')
-                ])
-                for request in job_card_material_requests:
-                    request.state = 'completed'
-
+            # ✅ Send confirmation email (if template exists)
             if manager_mail_template:
                 manager_mail_template.send_mail(rec.id)
 
-        # ✅ Don’t return an action — just return True to stay on the same form
+        # ✅ Stay on the same form after confirmation
         return True
 
     #@api.multi
@@ -377,20 +443,7 @@ class MaterialPurchaseRequisition(models.Model):
     #         rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
     #         rec.state = 'approve'
 
-    # def user_approve(self):
-    #     for rec in self:
-    #         rec.userrapp_date = fields.Date.today()
-    #         rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
-    #         rec.state = 'approve'
-    #
-    #         # ✅ Update job.card.material.request state to 'completed'
-    #         if rec.job_card_id:
-    #             job_card_material_requests = self.env['job.card.material.request'].search([
-    #                 ('job_card_id', '=', rec.job_card_id.id),
-    #                 ('state', '=', 'pending')
-    #             ])
-    #             for request in job_card_material_requests:
-    #                 request.state = 'completed'
+
 
     # def user_approve(self):
     #     for rec in self:
@@ -408,26 +461,42 @@ class MaterialPurchaseRequisition(models.Model):
 
     from odoo.exceptions import UserError
  # changed user approve function on oct 22 because if stock not available it should show popup so if need refer abobe old function
+ #    def user_approve(self):
+ #        for rec in self:
+ #            # 🔹 Check material lines for stock availability
+ #            for line in rec.requisition_line_ids:
+ #                if line.stock_qty <= 0:
+ #                    raise UserError(
+ #                        f"Cannot approve because the stock for product '{line.product_id.display_name}' is not available.")
+ #
+ #            # ✅ If stock is fine, proceed with approval
+ #            rec.userrapp_date = fields.Date.today()
+ #            rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+ #            rec.state = 'approve'
+ #
+ #            # ✅ If job_card_id exists, update related requests
+ #            if rec.job_card_id:
+ #                job_card_material_requests = self.env['job.card.material.request'].search([
+ #                    ('state', '=', 'pending')
+ #                ])
+ #                for request in job_card_material_requests:
+ #                    request.state = 'completed'
+
     def user_approve(self):
         for rec in self:
             # 🔹 Check material lines for stock availability
             for line in rec.requisition_line_ids:
                 if line.stock_qty <= 0:
                     raise UserError(
-                        f"Cannot approve because the stock for product '{line.product_id.display_name}' is not available.")
+                        f"Cannot approve because the stock for product '{line.product_id.display_name}' is not available."
+                    )
 
-            # ✅ If stock is fine, proceed with approval
+            # ✅ Proceed with approval
             rec.userrapp_date = fields.Date.today()
-            rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
+            rec.approve_employee_id = self.env['hr.employee'].search(
+                [('user_id', '=', self.env.uid)], limit=1
+            )
             rec.state = 'approve'
-
-            # ✅ If job_card_id exists, update related requests
-            if rec.job_card_id:
-                job_card_material_requests = self.env['job.card.material.request'].search([
-                    ('state', '=', 'pending')
-                ])
-                for request in job_card_material_requests:
-                    request.state = 'completed'
 
     #@api.multi
     def reset_draft(self):
@@ -661,31 +730,36 @@ class MaterialPurchaseRequisition(models.Model):
     #                 }))
     #         res['requisition_line_ids'] = lines
     #     return res
+ # october 27
+    # @api.model
+    # def default_get(self, fields):
+    #     res = super(MaterialPurchaseRequisition, self).default_get(fields)
+    #     job_card_id = self.env.context.get('default_job_card_id')
+    #     if job_card_id:
+    #         job_card = self.env['job.card.management'].browse(job_card_id)
+    #         lines = []
+    #         for line in job_card.job_detail_line_ids.filtered(
+    #                 lambda l: l.department == 'parts' and not l.is_request_completed and not l.is_request_pending):
+    #             product_variant = line.product_template_id.product_variant_id
+    #             if product_variant and product_variant.active:
+    #                 lines.append((0, 0, {
+    #                     # 'part_no':line.product_template_id,
+    #                     # 'part_no': product_variant.name,
+    #                     'part_no': f"[{product_variant.default_code}] {product_variant.name}" if product_variant.default_code else product_variant.name,
+    #                     'product_id': product_variant.id,
+    #                     'qty': line.quantity,
+    #                     'uom':line.uom,
+    #                     'description': line.description,
+    #                 }))
+    #         res['requisition_line_ids'] = lines
+    #     return res
 
-    @api.model
-    def default_get(self, fields):
-        res = super(MaterialPurchaseRequisition, self).default_get(fields)
-        job_card_id = self.env.context.get('default_job_card_id')
-        if job_card_id:
-            job_card = self.env['job.card.management'].browse(job_card_id)
-            lines = []
-            for line in job_card.job_detail_line_ids.filtered(
-                    lambda l: l.department == 'parts' and not l.is_request_completed and not l.is_request_pending):
-                product_variant = line.product_template_id.product_variant_id
-                if product_variant and product_variant.active:
-                    lines.append((0, 0, {
-                        # 'part_no':line.product_template_id,
-                        # 'part_no': product_variant.name,
-                        'part_no': f"[{product_variant.default_code}] {product_variant.name}" if product_variant.default_code else product_variant.name,
-                        'product_id': product_variant.id,
-                        'qty': line.quantity,
-                        'uom':line.uom,
-                        'description': line.description,
-                    }))
-            res['requisition_line_ids'] = lines
-        return res
-
-
+    @api.onchange('vehicle_id')
+    def _onchange_vehicle_id(self):
+        if self.vehicle_id:
+            self.vin_sn = self.vehicle_id.vin_sn
+        else:
+            self.vin_sn = False
 
 
 

@@ -1,0 +1,11 @@
+<odoo>
+
+
+<record id="seq_rfq_request" model="ir.sequence">
+    <field name="name">RFQ Request</field>
+    <field name="code">rfq.request</field>
+    <field name="prefix">RFQ</field>
+    <field name="padding">4</field>
+</record>
+
+</odoo>

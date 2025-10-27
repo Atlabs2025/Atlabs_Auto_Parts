@@ -99,6 +99,7 @@ Email notifications to Department Manager, Requisition Manager for approval.
                 'hr',
                 'purchase',
                 'fleet',
+                'atlbs_rfq',
 
                 ],
     'data':[

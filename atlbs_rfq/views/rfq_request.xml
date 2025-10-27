@@ -1,0 +1,83 @@
+<odoo>
+<record id="view_rfq_request_form" model="ir.ui.view">
+    <field name="name">rfq.request.form</field>
+    <field name="model">rfq.request</field>
+    <field name="arch" type="xml">
+        <form string="RFQ Request">
+
+
+            <!-- 📌 Header area for name display -->
+            <header>
+                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed"/>
+
+                <button name="action_confirm"
+                        string="Confirm"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"/>
+                <button string="Cancel" class="btn-secondary" special="cancel"/>
+
+
+
+
+            </header>
+
+            <sheet>
+
+
+
+
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_view_rfq" type="object" class="oe_stat_button"
+                            icon="fa-shopping-cart"
+                            string="RFQ">
+                        <field name="rfq_count" widget="statinfo" string="RFQ"/>
+                    </button>
+                </div>
+                <!-- Display RFQ Number at the top like Sale Order -->
+                <div class="oe_title">
+                    <h1>
+                        <field name="name" readonly="1"/>
+                    </h1>
+                </div>
+
+                <group>
+                    <field name="supplier_ids" widget="many2many_tags"/>
+                    <field name="state" readonly="1"/>
+                </group>
+
+                <notebook>
+                    <page string="Products">
+                        <field name="line_ids">
+                            <list editable="bottom">
+                                <field name="product_id"/>
+                                <field name="product_qty"/>
+                                <field name="price_unit"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </sheet>
+
+
+
+
+
+
+        </form>
+    </field>
+</record>
+
+
+    <record id="action_rfq_request" model="ir.actions.act_window">
+        <field name="name">RFQ Requests</field>
+        <field name="res_model">rfq.request</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_rfq_root" name="RFQ Management" sequence="10"/>
+    <menuitem id="menu_rfq_request" name="RFQ Requests"
+              parent="menu_rfq_root" action="action_rfq_request"/>
+
+
+</odoo>
