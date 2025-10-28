@@ -58,6 +58,7 @@ class RFQRequest(models.Model):
                 order_lines = []
                 for line in rec.line_ids:
                     order_lines.append((0, 0, {
+                        'part_type':line.part_type,
                         'product_id': line.product_id.id,
                         'name': line.product_id.display_name,
                         'product_qty': line.product_qty,
@@ -93,6 +94,11 @@ class RFQManagementLine(models.Model):
     _description = 'RFQ Management Line'
 
     rfq_id = fields.Many2one('rfq.request', string='RFQ Reference')
+    part_type = fields.Selection([
+        ('after_market', 'After Market'),
+        ('genuine', 'Genuine'),
+        ('used', 'Used'),
+    ], string='Part Type', default='')
     product_id = fields.Many2one('product.product', string='Product', required=True)
     product_qty = fields.Float(string='Quantity', required=True, default=1)
     price_unit = fields.Float(string='Unit Price')

@@ -54,6 +54,11 @@ class MaterialPurchaseRequisitionLine(models.Model):
         default='internal',
         required=True,
     )
+    part_type = fields.Selection([
+        ('after_market', 'After Market'),
+        ('genuine', 'Genuine'),
+        ('used', 'Used'),
+    ], string='Part Type', default='')
 
     part_no = fields.Char(string="Part Number")
     product_template_id = fields.Many2one('product.template', string="Part Number")

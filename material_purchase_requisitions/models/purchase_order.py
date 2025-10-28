@@ -79,3 +79,9 @@ class PurchaseOrderLine(models.Model):
         string='Requisitions Line',
         copy=False
     )
+
+    part_type = fields.Selection([
+        ('after_market', 'After Market'),
+        ('genuine', 'Genuine'),
+        ('used', 'Used'),
+    ], string='Part Type', default='')

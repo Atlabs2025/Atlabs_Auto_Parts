@@ -276,6 +276,7 @@ class MaterialPurchaseRequisition(models.Model):
                 'product_id': line.product_id.id,
                 'product_qty': line.qty,
                 'price_unit': line.cost_price or 0.0,
+                'part_type': line.part_type or False,
             }))
 
         # new boolean field added
