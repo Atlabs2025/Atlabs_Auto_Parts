@@ -38,7 +38,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     )
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
-        string='Analytic Account',
+        string='Nature Of Cost',
         copy=True,
     )
     partner_id = fields.Many2many(
