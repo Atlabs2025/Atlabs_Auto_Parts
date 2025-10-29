@@ -15,6 +15,13 @@ class PurchaseOrder(models.Model):
     vehicle_id = fields.Many2one('fleet.vehicle', string='Vehicle')
     vin_sn = fields.Char(string='VIN/SN')
 
+    @api.onchange('vehicle_id')
+    def _onchange_vehicle_id(self):
+        for rec in self:
+            rec.vin_sn = rec.vehicle_id.vin_sn or False
+
+
+
     # department = fields.Selection([
     #     ('labour', 'Labour'),
     #     ('parts', 'Parts'),
@@ -85,3 +92,5 @@ class PurchaseOrderLine(models.Model):
         ('genuine', 'Genuine'),
         ('used', 'Used'),
     ], string='Part Type', default='')
+
+    part_no = fields.Char(string="Part Number")

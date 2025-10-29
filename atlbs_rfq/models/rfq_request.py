@@ -12,7 +12,7 @@ class RFQRequest(models.Model):
         readonly=True,
         default='New'
     )
-    supplier_ids = fields.Many2many('res.partner', string='Suppliers')
+    supplier_ids = fields.Many2many('res.partner', string='Suppliers', domain=[('supplier_rank', '>', 0)])
     line_ids = fields.One2many('rfq.request.line', 'rfq_id', string='Products')
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -33,7 +33,6 @@ class RFQRequest(models.Model):
 
     @api.model
     def create(self, vals):
-        """Assign sequence number like RFQS0001, RFQS0002, etc."""
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
         return super().create(vals)
@@ -59,6 +58,7 @@ class RFQRequest(models.Model):
                 for line in rec.line_ids:
                     order_lines.append((0, 0, {
                         'part_type':line.part_type,
+                        'part_no':line.part_no,
                         'product_id': line.product_id.id,
                         'name': line.product_id.display_name,
                         'product_qty': line.product_qty,
@@ -99,6 +99,7 @@ class RFQManagementLine(models.Model):
         ('genuine', 'Genuine'),
         ('used', 'Used'),
     ], string='Part Type', default='')
+    part_no = fields.Char(string="Part Number")
     product_id = fields.Many2one('product.product', string='Product', required=True)
     product_qty = fields.Float(string='Quantity', required=True, default=1)
     price_unit = fields.Float(string='Unit Price')
