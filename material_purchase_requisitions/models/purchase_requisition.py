@@ -16,7 +16,9 @@ class MaterialPurchaseRequisition(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']      # odoo11
     _order = 'id desc'
 
+    # vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
     vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
+    vehicle_name = fields.Char(string="Vehicle")
     vin_sn = fields.Char(string="VIN Number")
     requisition_deadline_type = fields.Selection([
         ('normal', 'Normal'),

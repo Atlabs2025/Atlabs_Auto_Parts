@@ -42,7 +42,8 @@
                 <group>
                     <field name="supplier_ids" widget="many2many_tags"  domain="[('supplier_rank', '>', 0)]"/>
                     <field name="state" readonly="1"/>
-                    <field name="vehicle_id" readonly="1"/>
+                    <field name="vehicle_id" readonly="1" invisible="1"/>
+                    <field name="vehicle_name" readonly="1" />
                     <field name="vin_sn" readonly="1"/>
                 </group>
 

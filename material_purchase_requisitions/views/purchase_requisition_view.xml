@@ -56,7 +56,8 @@
                                     <field name="receive_date"/>
 <!--                                    <field name="date_end" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>-->
                                     <field name="date_end"/>
-                                    <field name="vehicle_id"/>
+                                    <field name="vehicle_id" invisible="1"/>
+                                    <field name="vehicle_name"/>
                                     <field name="vin_sn"/>
                                     <field name="requisition_deadline_type"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>

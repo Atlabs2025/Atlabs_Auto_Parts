@@ -28,6 +28,7 @@ class RFQRequest(models.Model):
     )
 
     vehicle_id = fields.Many2one('fleet.vehicle', string="Vehicle")
+    vehicle_name = fields.Char(string="Vehicle")
     vin_sn = fields.Char(string="VIN Number")
 
 
