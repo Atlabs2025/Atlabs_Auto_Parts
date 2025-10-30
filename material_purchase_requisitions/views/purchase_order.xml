@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <data>
+
     <record id="view_purchase_order_form_inherit_rfq" model="ir.ui.view">
         <field name="name">purchase.order.form.inherit.rfq</field>
         <field name="model">purchase.order</field>
@@ -17,8 +17,5 @@
         </xpath>
         </field>
     </record>
-
-
-
-    </data>
+    
 </odoo>
