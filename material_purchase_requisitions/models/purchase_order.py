@@ -20,43 +20,67 @@ class PurchaseOrder(models.Model):
     vin_sn = fields.Char(string='VIN/SN')
 
     # def action_send_whatsapp_pdf(self):
-    #     self.ensure_one()
+    #     for task in self:
     #
-    #     # Determine which report to use
-    #     if self.state in ['draft', 'purchase']:
-    #         report_ref = 'purchase.report_purchase_quotation'  # RFQ report XML ID
-    #     elif self.state == 'purchase':
-    #         report_ref = 'purchase.action_report_purchase_order'  # PO report XML ID
-    #     else:
-    #         raise UserError("WhatsApp sending is allowed only for RFQ or Purchase Order.")
+    #         # self.ensure_one()
     #
-    #     # Fetch report
-    #     report = self.env.ref(report_ref)
+    #         # --- Choose the correct report based on state ---
+    #         if task.state in ['draft', 'sent']:
+    #             report_ref = 'purchase.report_purchase_quotation'  # RFQ
+    #             doc_label = 'Request for Quotation'
+    #         elif task.state == 'purchase':
+    #             report_ref = 'purchase.action_report_purchase_order'  # Purchase Order
+    #             doc_label = 'Purchase Order'
+    #         else:
+    #             raise UserError(_("WhatsApp sending is allowed only for RFQ or Purchase Order."))
     #
-    #     # Generate the PDF
-    #     pdf_content, _ = report._render_qweb_pdf(self.id)
+    #         # --- Get the report safely ---
+    #         report = self.env.ref(report_ref)
+    #         print(report)
+    #         if not report or report._name != 'ir.actions.report':
+    #             raise UserError(_(f"Invalid or missing report reference: {report_ref}"))
     #
-    #     # Optional: Save or attach to WhatsApp message
-    #     attachment = self.env['ir.attachment'].create({
-    #         'name': f'{self.name}.pdf',
-    #         'type': 'binary',
-    #         'datas': base64.b64encode(pdf_content),
-    #         'res_model': 'purchase.order',
-    #         'res_id': self.id,
-    #         'mimetype': 'application/pdf'
-    #     })
+    #         # --- Prepare WhatsApp message ---
+    #         if not task.partner_id or not task.partner_id.mobile:
+    #             raise UserError(_("No mobile number found for the vendor."))
     #
-    #     # Logic to send via WhatsApp (depending on your WhatsApp integration)
-    #     # e.g. self.partner_id.send_whatsapp_message(attachment)
+    #         mobile = task.partner_id.mobile.strip().replace(' ', '').replace('+', '')
+    #         if mobile.startswith('0'):
+    #             mobile = mobile[1:]
+    #         if not mobile.startswith('971'):
+    #             mobile = '971' + mobile
     #
-    #     return {
-    #         'effect': {
-    #             'fadeout': 'slow',
-    #             'message': f'WhatsApp message sent successfully for {self.name}',
-    #             'type': 'rainbow_man',
+    #         base_url = task.env['ir.config_parameter'].sudo().get_param('web.base.url')
+    #         report_id = report_ref
+    #         report_url = f"{base_url}/public/report/purchase.order/{report_id}/{task.id}"
+    #
+    #         # report_url = f"{base_url}/web/content/{attachment.id}?download=true"
+    #
+    #         uae_tz = pytz.timezone('Asia/Dubai')
+    #         order_date = task.date_order or fields.Datetime.now()
+    #         formatted_date = order_date.astimezone(uae_tz).strftime('%d-%b-%Y %I:%M %p')
+    #
+    #         message = f"""Dear {task.partner_id.name},
+    #
+    # 📄 {doc_label}: {task.name}
+    # 📅 Date: {formatted_date}
+    #
+    # You can download your document here:
+    # {report_url}
+    #
+    # Thank you,
+    # Purchasing Department
+    # """
+    #
+    #         encoded_msg = urllib.parse.quote(message)
+    #         whatsapp_url = f"https://web.whatsapp.com/send?phone={mobile}&text={encoded_msg}"
+    #
+    #         return {
+    #             'type': 'ir.actions.act_url',
+    #             'url': whatsapp_url,
+    #             'target': 'new',
     #         }
-    #     }
-
+# code by arvind
     def action_send_whatsapp_pdf(self):
         for rec in self:
             if not rec.partner_id or not rec.partner_id.mobile:
@@ -71,22 +95,20 @@ class PurchaseOrder(models.Model):
 
             # Choose correct report based on state
             if rec.state == 'draft':
-                report = self.env.ref('purchase.report_purchase_quotation')
-                print(report,'ffffffffffff')
+                report_ref = 'purchase.report_purchase_quotation'  # RFQ report
                 report_name = 'RFQ'
             elif rec.state == 'purchase':
-                report = self.env.ref('purchase.action_report_purchase_order')
-                print(report,'tttttttttt')
+                report_ref = 'purchase.action_report_purchase_order'  # Purchase Order report
                 report_name = 'Purchase_Order'
             else:
                 raise UserError("Only RFQ or Purchase Order can be sent via WhatsApp.")
 
+            # ✅ Render PDF using same style as account.invoice example
+            pdf_content, _ = self.env['ir.actions.report'].with_context(force_report_rendering=True)._render_qweb_pdf(
+                report_ref, res_ids=rec.id
+            )
 
-            # ✅ Render PDF
-            pdf_content, _ = report._render_qweb_pdf(rec.id)
-            print(pdf_content,'contenttttttttt')
-
-            # Create attachment with access token
+            # Create attachment
             attachment = self.env['ir.attachment'].create({
                 'name': f"{report_name}_{rec.name}.pdf",
                 'type': 'binary',
@@ -202,4 +224,15 @@ class PurchaseOrderLine(models.Model):
 
     part_no = fields.Char(string="Part Number")
 
-    
+    is_storable = fields.Boolean(
+        string="Is Storable",
+        compute="_compute_is_storable",
+        store=False
+    )
+
+    def _compute_is_storable(self):
+        for line in self:
+            line.is_storable = line.product_id and line.product_id.type == 'product'
+
+
+
