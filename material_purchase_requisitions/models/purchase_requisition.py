@@ -2,7 +2,7 @@
 
 from odoo import models, fields, api, _
 from datetime import datetime, date
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.exceptions import UserError
 from odoo.tools import float_compare
 import logging
@@ -226,6 +226,16 @@ class MaterialPurchaseRequisition(models.Model):
             })
         res = super(MaterialPurchaseRequisition, self).create(vals)
         return res
+
+
+
+    @api.constrains('department_id', 'vehicle_name', 'vin_no')
+    def _check_vehicle_required(self):
+        for rec in self:
+            if rec.department_id and rec.department_id.name != 'Inventory':
+                if not rec.vehicle_name or not rec.vin_no:
+                    raise ValidationError(_("Vehicle Name and VIN No are required for non-Inventory departments."))
+
 
     # @api.model
     # def create(self, vals):
