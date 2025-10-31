@@ -229,11 +229,11 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
-    @api.constrains('department_id', 'vehicle_name', 'vin_no')
+    @api.constrains('department_id', 'vehicle_name', 'vin_sn')
     def _check_vehicle_required(self):
         for rec in self:
             if rec.department_id and rec.department_id.name != 'Inventory':
-                if not rec.vehicle_name or not rec.vin_no:
+                if not rec.vehicle_name or not rec.vin_sn:
                     raise ValidationError(_("Vehicle Name and VIN No are required for non-Inventory departments."))
 
 
@@ -438,6 +438,76 @@ class MaterialPurchaseRequisition(models.Model):
     #     # ✅ Stay on the same form after confirmation
     #     return True
   # changed function on oct 29 for creating internal picking when the stock is there
+  #   def requisition_confirm(self):
+  #       stock_picking = self.env['stock.picking']
+  #       stock_move = self.env['stock.move']
+  #       picking_type_obj = self.env['stock.picking.type']
+  #
+  #       for rec in self:
+  #           # 🔹 Send email template if available
+  #           manager_mail_template = self.env.ref(
+  #               'material_purchase_requisitions.email_confirm_material_purchase_requistion',
+  #               raise_if_not_found=False
+  #           )
+  #
+  #           # 🔹 Confirmation details
+  #           rec.employee_confirm_id = rec.employee_id.id
+  #           rec.confirm_date = fields.Date.today()
+  #           rec.state = 'dept_confirm'
+  #
+  #           # 🔹 Ensure there are requisition lines
+  #           if not rec.requisition_line_ids:
+  #               raise UserError(_('Please create some requisition lines before confirming.'))
+  #
+  #           # 🔹 Get internal transfer picking type
+  #           internal_type = picking_type_obj.search([('code', '=', 'internal')], limit=1)
+  #           if not internal_type:
+  #               raise UserError(_('Please configure an internal transfer picking type.'))
+  #
+  #           # 🔹 Get source & destination locations
+  #           source_location = internal_type.default_location_src_id
+  #           dest_location = internal_type.default_location_dest_id
+  #           if not source_location or not dest_location:
+  #               raise UserError(_('Please set source and destination locations for the internal picking type.'))
+  #
+  #           # 🔹 Create internal picking
+  #           picking_vals = {
+  #               'picking_type_id': internal_type.id,
+  #               'location_id': source_location.id,
+  #               'location_dest_id': dest_location.id,
+  #               'origin': rec.name,
+  #               'company_id': rec.company_id.id,
+  #               'custom_requisition_id': rec.id if 'custom_requisition_id' in stock_picking._fields else False,
+  #               'note': rec.reason if 'reason' in rec._fields else '',
+  #           }
+  #           picking = stock_picking.sudo().create(picking_vals)
+  #
+  #           # 🔹 Create stock moves for each line
+  #           for line in rec.requisition_line_ids:
+  #               if not line.product_id:
+  #                   continue
+  #               move_vals = {
+  #                   'name': line.product_id.display_name,
+  #                   'product_id': line.product_id.id,
+  #                   'product_uom_qty': line.qty,
+  #                   'product_uom': line.uom.id if line.uom else line.product_id.uom_id.id,
+  #                   'location_id': source_location.id,
+  #                   'location_dest_id': dest_location.id,
+  #                   'picking_id': picking.id,
+  #                   'company_id': rec.company_id.id,
+  #               }
+  #               stock_move.sudo().create(move_vals)
+  #
+  #           # 🔹 Link picking if you have a field for it
+  #           if 'delivery_picking_id' in rec._fields:
+  #               rec.delivery_picking_id = picking.id
+  #
+  #           # 🔹 Send confirmation email
+  #           if manager_mail_template:
+  #               manager_mail_template.send_mail(rec.id)
+  #
+  #       return True
+
     def requisition_confirm(self):
         stock_picking = self.env['stock.picking']
         stock_move = self.env['stock.move']
@@ -478,11 +548,12 @@ class MaterialPurchaseRequisition(models.Model):
                 'origin': rec.name,
                 'company_id': rec.company_id.id,
                 'custom_requisition_id': rec.id if 'custom_requisition_id' in stock_picking._fields else False,
+                'scheduled_date': fields.Datetime.now(),
                 'note': rec.reason if 'reason' in rec._fields else '',
             }
             picking = stock_picking.sudo().create(picking_vals)
 
-            # 🔹 Create stock moves for each line
+            # 🔹 Create stock moves for each requisition line
             for line in rec.requisition_line_ids:
                 if not line.product_id:
                     continue
@@ -501,6 +572,29 @@ class MaterialPurchaseRequisition(models.Model):
             # 🔹 Link picking if you have a field for it
             if 'delivery_picking_id' in rec._fields:
                 rec.delivery_picking_id = picking.id
+
+            # ✅ Auto confirm, assign, and validate picking (mark as done)
+            picking.action_confirm()
+            picking.action_assign()
+
+            for move in picking.move_ids_without_package:
+                if move.state not in ('done', 'cancel'):
+                    # Ensure at least one move line exists
+                    if not move.move_line_ids:
+                        self.env['stock.move.line'].sudo().create({
+                            'move_id': move.id,
+                            'product_id': move.product_id.id,
+                            'product_uom_id': move.product_uom.id,
+                            'quantity': move.product_uom_qty,  # ✅ updated field
+                            'location_id': move.location_id.id,
+                            'location_dest_id': move.location_dest_id.id,
+                            'company_id': move.company_id.id,
+                        })
+                    else:
+                        move.move_line_ids.write({'quantity': move.product_uom_qty})  # ✅ updated field
+
+            # ✅ Validate picking (mark as Done)
+            picking.button_validate()
 
             # 🔹 Send confirmation email
             if manager_mail_template:
