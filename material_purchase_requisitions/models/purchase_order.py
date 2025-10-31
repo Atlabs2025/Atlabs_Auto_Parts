@@ -236,3 +236,16 @@ class PurchaseOrderLine(models.Model):
 
 
 
+
+
+
+
+# please remove this codes before pushing
+
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+
+    duplicate_bank_partner_ids = fields.Many2many('res.partner.bank', string='Duplicate Bank Partners', compute='_compute_dummy')
+    available_peppol_eas = fields.Char(string="Available Peppol EAS")
+    def _compute_dummy(self):
+        self.duplicate_bank_partner_ids = False
