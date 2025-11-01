@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields, api,_
 from odoo.exceptions import UserError
 import base64
 import pytz
@@ -19,67 +19,7 @@ class PurchaseOrder(models.Model):
     vehicle_name = fields.Char(string='Vehicle')
     vin_sn = fields.Char(string='VIN/SN')
 
-    # def action_send_whatsapp_pdf(self):
-    #     for task in self:
-    #
-    #         # self.ensure_one()
-    #
-    #         # --- Choose the correct report based on state ---
-    #         if task.state in ['draft', 'sent']:
-    #             report_ref = 'purchase.report_purchase_quotation'  # RFQ
-    #             doc_label = 'Request for Quotation'
-    #         elif task.state == 'purchase':
-    #             report_ref = 'purchase.action_report_purchase_order'  # Purchase Order
-    #             doc_label = 'Purchase Order'
-    #         else:
-    #             raise UserError(_("WhatsApp sending is allowed only for RFQ or Purchase Order."))
-    #
-    #         # --- Get the report safely ---
-    #         report = self.env.ref(report_ref)
-    #         print(report)
-    #         if not report or report._name != 'ir.actions.report':
-    #             raise UserError(_(f"Invalid or missing report reference: {report_ref}"))
-    #
-    #         # --- Prepare WhatsApp message ---
-    #         if not task.partner_id or not task.partner_id.mobile:
-    #             raise UserError(_("No mobile number found for the vendor."))
-    #
-    #         mobile = task.partner_id.mobile.strip().replace(' ', '').replace('+', '')
-    #         if mobile.startswith('0'):
-    #             mobile = mobile[1:]
-    #         if not mobile.startswith('971'):
-    #             mobile = '971' + mobile
-    #
-    #         base_url = task.env['ir.config_parameter'].sudo().get_param('web.base.url')
-    #         report_id = report_ref
-    #         report_url = f"{base_url}/public/report/purchase.order/{report_id}/{task.id}"
-    #
-    #         # report_url = f"{base_url}/web/content/{attachment.id}?download=true"
-    #
-    #         uae_tz = pytz.timezone('Asia/Dubai')
-    #         order_date = task.date_order or fields.Datetime.now()
-    #         formatted_date = order_date.astimezone(uae_tz).strftime('%d-%b-%Y %I:%M %p')
-    #
-    #         message = f"""Dear {task.partner_id.name},
-    #
-    # 📄 {doc_label}: {task.name}
-    # 📅 Date: {formatted_date}
-    #
-    # You can download your document here:
-    # {report_url}
-    #
-    # Thank you,
-    # Purchasing Department
-    # """
-    #
-    #         encoded_msg = urllib.parse.quote(message)
-    #         whatsapp_url = f"https://web.whatsapp.com/send?phone={mobile}&text={encoded_msg}"
-    #
-    #         return {
-    #             'type': 'ir.actions.act_url',
-    #             'url': whatsapp_url,
-    #             'target': 'new',
-    #         }
+
 # code by arvind
     def action_send_whatsapp_pdf(self):
         for rec in self:
@@ -146,15 +86,7 @@ class PurchaseOrder(models.Model):
                 'target': 'new',
             }
 
-    # department = fields.Selection([
-    #     ('labour', 'Labour'),
-    #     ('parts', 'Parts'),
-    #     ('material', 'Material'),
-    #     ('lubricant', 'Lubricant'),
-    #     ('sublets', 'Sublets'),
-    #     ('paint_material', 'Paint Material'),
-    #     ('tyre', 'Tyre'),
-    # ], string="Department")
+
 
     # function added on july31 for fetching details from material purchase
 
@@ -200,10 +132,6 @@ class PurchaseOrder(models.Model):
                 }))
             res['order_line'] = order_lines
         return res
-
-
-
-
 
 
 
