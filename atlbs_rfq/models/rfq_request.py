@@ -72,23 +72,31 @@ class RFQRequest(models.Model):
     #
     #         rec.state = 'confirmed'
  # problem of comfirming solved
+
     def action_confirm(self):
-        """Create multiple Purchase Orders for selected suppliers"""
         for rec in self:
             if not rec.supplier_ids:
                 raise UserError("Please select at least one supplier.")
             if not rec.line_ids:
                 raise UserError("Please add at least one product line.")
 
-            # ✅ Get default incoming picking type for current company
+            # ✅ Try to get incoming picking type first
             picking_type = self.env['stock.picking.type'].search([
-                ('code', '=', 'internal'),
+                ('code', '=', 'incoming'),
                 ('warehouse_id.company_id', '=', self.env.company.id)
             ], limit=1)
 
+            # 🔁 Fallback to internal if not found
+            if not picking_type:
+                picking_type = self.env['stock.picking.type'].search([
+                    ('code', '=', 'internal'),
+                    ('warehouse_id.company_id', '=', self.env.company.id)
+                ], limit=1)
+
             if not picking_type:
                 raise UserError(
-                    "No incoming picking type found for this company. Please configure it in Inventory > Settings.")
+                    "No picking type found for this company. Please configure it in Inventory > Settings."
+                )
 
             for supplier in rec.supplier_ids:
                 po_vals = {
@@ -96,8 +104,8 @@ class RFQRequest(models.Model):
                     'rfq_request_id': rec.id,
                     'vehicle_id': rec.vehicle_id.id if rec.vehicle_id else False,
                     'vin_sn': rec.vin_sn or False,
+                    'picking_type_id': picking_type.id,  # ✅ ensure assigned
                     'order_line': [],
-                    'picking_type_id': picking_type.id,  # ✅ added here
                 }
 
                 order_lines = []
@@ -112,6 +120,7 @@ class RFQRequest(models.Model):
                         'date_planned': fields.Date.today(),
                     }))
                 po_vals['order_line'] = order_lines
+
                 self.env['purchase.order'].create(po_vals)
 
             rec.state = 'confirmed'
