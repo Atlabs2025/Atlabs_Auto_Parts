@@ -133,7 +133,56 @@ class PurchaseOrder(models.Model):
             res['order_line'] = order_lines
         return res
 
+    def button_confirm(self):
+        res = super(PurchaseOrder, self).button_confirm()
 
+        for rec in self:
+            rec.state = 'to approve'
+            manager_group = self.env.ref('purchase.group_purchase_manager', raise_if_not_found=False)
+            if not manager_group or not manager_group.users:
+                raise UserError(_("No purchase manager found to notify."))
+
+            manager_employee = self.env['hr.employee'].search([
+                ('user_id', 'in', manager_group.users.ids),
+                ('work_phone', '!=', False)
+            ], limit=1)
+
+            if not manager_employee:
+                raise UserError(_("Purchase Manager has no work phone number set."))
+
+            mobile = manager_employee.work_phone.strip().replace(' ', '').replace('+', '')
+            if mobile.startswith('0'):
+                mobile = mobile[1:]
+            if not mobile.startswith('971'):
+                mobile = '971' + mobile
+
+            # 🔹 Build correct Odoo form view link
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            approval_link = f"{base_url}/web#id={rec.id}&model=purchase.order&view_type=form"
+
+            message = f"""Dear Manager,
+
+🧾 A new Purchase Order request requires your approval.
+
+📄 Reference: {rec.name}
+👤 Requested by: {self.env.user.name}
+📅 Date: {rec.date_order.strftime('%d-%b-%Y') if rec.date_order else 'N/A'}
+
+Please review and approve using the link below:
+🔗 {approval_link}
+
+Best regards,
+Purchase Department"""
+
+            encoded_msg = urllib.parse.quote(message)
+            whatsapp_url = f"https://web.whatsapp.com/send?phone={mobile}&text={encoded_msg}"
+            return {
+                'type': 'ir.actions.act_url',
+                'url': whatsapp_url,
+                'target': 'new',
+            }
+
+        return res
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
@@ -169,6 +218,5 @@ class PurchaseOrderLine(models.Model):
 
 
 # please remove this codes before pushing
-
 
 # removed
