@@ -133,15 +133,69 @@ class PurchaseOrder(models.Model):
             res['order_line'] = order_lines
         return res
 
+#     def button_confirm(self):
+#         res = super(PurchaseOrder, self).button_confirm()
+#
+#         for rec in self:
+#             rec.state = 'to approve'
+#             manager_group = self.env.ref('purchase.group_purchase_manager', raise_if_not_found=False)
+#             if not manager_group or not manager_group.users:
+#                 raise UserError(_("No purchase manager found to notify."))
+#
+#             manager_employee = self.env['hr.employee'].search([
+#                 ('user_id', 'in', manager_group.users.ids),
+#                 ('work_phone', '!=', False)
+#             ], limit=1)
+#
+#             if not manager_employee:
+#                 raise UserError(_("Purchase Manager has no work phone number set."))
+#
+#             mobile = manager_employee.work_phone.strip().replace(' ', '').replace('+', '')
+#             if mobile.startswith('0'):
+#                 mobile = mobile[1:]
+#             if not mobile.startswith('971'):
+#                 mobile = '971' + mobile
+#
+#             # 🔹 Build correct Odoo form view link
+#             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+#             approval_link = f"{base_url}/web#id={rec.id}&model=purchase.order&view_type=form"
+#
+#             message = f"""Dear Manager,
+#
+# 🧾 A new Purchase Order request requires your approval.
+#
+# 📄 Reference: {rec.name}
+# 👤 Requested by: {self.env.user.name}
+# 📅 Date: {rec.date_order.strftime('%d-%b-%Y') if rec.date_order else 'N/A'}
+#
+# Please review and approve using the link below:
+# 🔗 {approval_link}
+#
+# Best regards,
+# Purchase Department"""
+#
+#             encoded_msg = urllib.parse.quote(message)
+#             whatsapp_url = f"https://web.whatsapp.com/send?phone={mobile}&text={encoded_msg}"
+#             return {
+#                 'type': 'ir.actions.act_url',
+#                 'url': whatsapp_url,
+#                 'target': 'new',
+#             }
+#
+#         return res
+
     def button_confirm(self):
         res = super(PurchaseOrder, self).button_confirm()
 
         for rec in self:
             rec.state = 'to approve'
+
+            # 🔹 Get Purchase Manager group
             manager_group = self.env.ref('purchase.group_purchase_manager', raise_if_not_found=False)
             if not manager_group or not manager_group.users:
                 raise UserError(_("No purchase manager found to notify."))
 
+            # 🔹 Find one manager with phone number (for WhatsApp)
             manager_employee = self.env['hr.employee'].search([
                 ('user_id', 'in', manager_group.users.ids),
                 ('work_phone', '!=', False)
@@ -150,32 +204,59 @@ class PurchaseOrder(models.Model):
             if not manager_employee:
                 raise UserError(_("Purchase Manager has no work phone number set."))
 
+            # 🔹 Prepare WhatsApp number
             mobile = manager_employee.work_phone.strip().replace(' ', '').replace('+', '')
             if mobile.startswith('0'):
                 mobile = mobile[1:]
             if not mobile.startswith('971'):
                 mobile = '971' + mobile
 
-            # 🔹 Build correct Odoo form view link
+            # 🔹 Build Odoo record link
             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
             approval_link = f"{base_url}/web#id={rec.id}&model=purchase.order&view_type=form"
 
+            # 🔹 WhatsApp message
             message = f"""Dear Manager,
 
-🧾 A new Purchase Order request requires your approval.
+A new Purchase Order requires your approval.
 
-📄 Reference: {rec.name}
-👤 Requested by: {self.env.user.name}
-📅 Date: {rec.date_order.strftime('%d-%b-%Y') if rec.date_order else 'N/A'}
+Reference: {rec.name}
+Requested by: {self.env.user.name}
+Date: {rec.date_order.strftime('%d-%b-%Y') if rec.date_order else 'N/A'}
 
 Please review and approve using the link below:
-🔗 {approval_link}
+{approval_link}
 
 Best regards,
 Purchase Department"""
 
             encoded_msg = urllib.parse.quote(message)
             whatsapp_url = f"https://web.whatsapp.com/send?phone={mobile}&text={encoded_msg}"
+
+            # ✅ Send ONE chat message to all managers (no duplicates)
+            bot_user = self.env.ref('base.user_root')  # System (OdooBot)
+            partner_ids = manager_group.users.mapped('partner_id').ids  # all managers’ partners
+
+            plain_message = (
+                f"Purchase Order Approval Needed\n\n"
+                f"Reference: {rec.name}\n"
+                f"Requested by: {self.env.user.name}\n"
+                f"Date: {rec.date_order.strftime('%d-%b-%Y') if rec.date_order else 'N/A'}\n\n"
+                f"Please review and approve this request:\n{approval_link}"
+            )
+
+            self.env['mail.message'].create({
+                'model': 'purchase.order',
+                'res_id': rec.id,
+                'body': plain_message,
+                'subject': 'Purchase Order Approval Needed',
+                'message_type': 'comment',
+                'subtype_id': self.env.ref('mail.mt_comment').id,
+                'author_id': bot_user.partner_id.id,
+                'partner_ids': [(6, 0, partner_ids)],  # one message, all recipients
+            })
+
+            # 🔹 Open WhatsApp after sending Odoo message
             return {
                 'type': 'ir.actions.act_url',
                 'url': whatsapp_url,
@@ -183,6 +264,7 @@ Purchase Department"""
             }
 
         return res
+
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
