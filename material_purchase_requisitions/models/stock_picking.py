@@ -23,6 +23,8 @@ class StockPicking(models.Model):
         copy=True,
     )
 
+    taken_by = fields.Char(string="Taken By")
+
     department_id = fields.Many2one(
         'hr.department',
         string='Department',
@@ -56,6 +58,17 @@ class StockMove(models.Model):
         store=False,
     )
 
+    # commented because stock showing minus value
+    #
+    # @api.depends('product_id', 'location_id')
+    # def _compute_available_qty(self):
+    #     for rec in self:
+    #         qty = 0.0
+    #         if rec.product_id and rec.location_id:
+    #             # get quantity available in that location
+    #             qty = rec.product_id.with_context(location=rec.location_id.id).qty_available
+    #         rec.available_qty = qty
+
     @api.depends('product_id', 'location_id')
     def _compute_available_qty(self):
         for rec in self:
@@ -63,6 +76,8 @@ class StockMove(models.Model):
             if rec.product_id and rec.location_id:
                 # get quantity available in that location
                 qty = rec.product_id.with_context(location=rec.location_id.id).qty_available
-            rec.available_qty = qty
+
+            # ✅ ensure negative values display as 0
+            rec.available_qty = max(qty, 0.0)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

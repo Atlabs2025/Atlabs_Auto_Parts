@@ -110,6 +110,7 @@ Email notifications to Department Manager, Requisition Manager for approval.
         'data/employee_purchase_approval_template.xml',
         'data/confirm_template_material_purchase.xml',
         'report/purchase_requisition_report.xml',
+        # 'report/purchase_order_inherit.xml',
         'views/purchase_requisition_view.xml',
         'views/hr_employee_view.xml',
         'views/hr_department_view.xml',
