@@ -295,7 +295,14 @@ class PurchaseOrderLine(models.Model):
 
 
 
+class ProductTemplate(models.Model):
+    _inherit = 'product.template'
 
+    @api.model
+    def create(self, vals):
+        # Automatically tick is_storable as True when creating a product
+        vals['is_storable'] = True
+        return super(ProductTemplate, self).create(vals)
 
 
 
