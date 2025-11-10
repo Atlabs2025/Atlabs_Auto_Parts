@@ -102,7 +102,7 @@ class RFQRequest(models.Model):
                 po_vals = {
                     'partner_id': supplier.id,
                     'rfq_request_id': rec.id,
-                    'vehicle_id': rec.vehicle_id.id if rec.vehicle_id else False,
+                    'vehicle_name': rec.vehicle_name if rec.vehicle_name else False,
                     'vin_sn': rec.vin_sn or False,
                     'picking_type_id': picking_type.id,  # ✅ ensure assigned
                     'order_line': [],
