@@ -289,6 +289,7 @@ class PurchaseOrderLine(models.Model):
         compute="_compute_is_storable",
         store=False
     )
+    # image = fields.Binary(string="Image")
 
     def _compute_is_storable(self):
         for line in self:
@@ -319,7 +320,7 @@ class ProductTemplate(models.Model):
 
             if duplicate:
                 raise ValidationError(
-                    "This Internal Reference  is already used by another product. "
+                    "This Part Number  is already used by another product. "
                     "Please enter a unique value."
                 )
 

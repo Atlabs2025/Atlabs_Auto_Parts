@@ -158,6 +158,7 @@ class RFQManagementLine(models.Model):
     product_id = fields.Many2one('product.product', string='Product', required=True)
     product_qty = fields.Float(string='Quantity', required=True, default=1)
     price_unit = fields.Float(string='Unit Price')
+    # image = fields.Binary(string="Image")
 
 
 
