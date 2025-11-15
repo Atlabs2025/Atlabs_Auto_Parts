@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api,_
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 import base64
 import pytz
 import urllib.parse
@@ -264,6 +264,25 @@ Purchase Department"""
             }
 
         return res
+
+    @api.constrains('vehicle_name', 'vin_sn')
+    def _check_unique_values(self):
+        for rec in self:
+            if rec.vehicle_name:
+                exist = self.search([
+                    ('vehicle_name', '=', rec.vehicle_name),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if exist:
+                    raise ValidationError("This Vehicle Name is already used in another record.")
+
+            if rec.vin_sn:
+                exist = self.search([
+                    ('vin_sn', '=', rec.vin_sn),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if exist:
+                    raise ValidationError("This VIN Number is already used in another record.")
 
 
 class PurchaseOrderLine(models.Model):

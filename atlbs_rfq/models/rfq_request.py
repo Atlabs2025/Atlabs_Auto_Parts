@@ -1,5 +1,6 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
+
 
 class RFQRequest(models.Model):
     _name = 'rfq.request'
@@ -141,6 +142,24 @@ class RFQRequest(models.Model):
             'context': {'default_rfq_request_id': self.id},
         }
 
+    @api.constrains('vehicle_name', 'vin_sn')
+    def _check_unique_values(self):
+        for rec in self:
+            if rec.vehicle_name:
+                exist = self.search([
+                    ('vehicle_name', '=', rec.vehicle_name),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if exist:
+                    raise ValidationError("This Vehicle Name is already used in another record.")
+
+            if rec.vin_sn:
+                exist = self.search([
+                    ('vin_sn', '=', rec.vin_sn),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if exist:
+                    raise ValidationError("This VIN Number is already used in another record.")
 
 
 class RFQManagementLine(models.Model):

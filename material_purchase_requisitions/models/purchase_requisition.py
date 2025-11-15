@@ -307,30 +307,7 @@ class MaterialPurchaseRequisition(models.Model):
             },
         }
 
-    # @api.model
-    # def create(self, vals):
-    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
-    #     vals.update({'name': name})
-    #
-    #     # Create the requisition record
-    #     res = super(MaterialPurchaseRequisition, self).create(vals)
-    #
-    #     # Ensure job_card_id exists
-    #     if res.job_card_id:
-    #         # Loop through each requisition line and create a material request line
-    #         for line in res.requisition_line_ids:
-    #             self.env['job.card.material.request'].create({
-    #                 # 'job_card_id': res.job_card_id.id,
-    #                 'employee_id': res.employee_id.id,
-    #                 'request_date': res.request_date,
-    #                 'requisition_type': line.requisition_type,
-    #                 'product_id': line.product_id.id,
-    #                 'description': line.description,
-    #                 'qty': line.qty,
-    #                 'uom': line.uom.id,
-    #             })
-    #
-    #     return res
+
 
 
     #@api.multi
@@ -580,12 +557,7 @@ class MaterialPurchaseRequisition(models.Model):
             email_iruser_template.send_mail(self.id)
             rec.state = 'ir_approve'
 
-    #@api.multi
-    # def user_approve(self):
-    #     for rec in self:
-    #         rec.userrapp_date = fields.Date.today()
-    #         rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
-    #         rec.state = 'approve'
+
 
 
 
@@ -949,6 +921,24 @@ class MaterialPurchaseRequisition(models.Model):
         }
         return purchase_action
 
+    @api.constrains( 'vehicle_name', 'vin_sn')
+    def _check_unique_values(self):
+        for rec in self:
+            if rec.vehicle_name:
+                exist = self.search([
+                    ('vehicle_name', '=', rec.vehicle_name),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if exist:
+                    raise ValidationError("This Vehicle Name is already used in another record.")
+
+            if rec.vin_sn:
+                exist = self.search([
+                    ('vin_sn', '=', rec.vin_sn),
+                    ('id', '!=', rec.id)
+                ], limit=1)
+                if exist:
+                    raise ValidationError("This VIN Number is already used in another record.")
 
 
 
@@ -995,12 +985,6 @@ class MaterialPurchaseRequisition(models.Model):
     #         res['requisition_line_ids'] = lines
     #     return res
 
-    @api.onchange('vehicle_id')
-    def _onchange_vehicle_id(self):
-        if self.vehicle_id:
-            self.vin_sn = self.vehicle_id.vin_sn
-        else:
-            self.vin_sn = False
 
 
 
