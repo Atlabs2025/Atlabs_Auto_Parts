@@ -15,7 +15,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     product_id = fields.Many2one(
         'product.product',
         string='Product',
-        required=True,
+        # required=True,
     )
 
 #     layout_category_id = fields.Many2one(
@@ -71,6 +71,8 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
     from_job_card = fields.Boolean(
         string='From Job Card')
+
+    image = fields.Binary(string="Image")
 
     @api.depends('product_id')
     def _compute_stock_qty(self):
