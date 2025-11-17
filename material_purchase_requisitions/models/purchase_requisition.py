@@ -25,6 +25,14 @@ class MaterialPurchaseRequisition(models.Model):
         ('urgent', 'Urgent'),
     ], string='Requisition Deadline Type', default='normal', tracking=True)
 
+    @api.onchange('car_id')
+    def _onchange_car_id(self):
+        if self.car_id:
+            self.vin_sn = self.car_id.vin_sn
+            self.vehicle_name = self.car_id.title_en
+        else:
+            self.vin_sn = False
+            self.vehicle_name = False
 
 
     #@api.multi
@@ -211,9 +219,9 @@ class MaterialPurchaseRequisition(models.Model):
         copy=False,
     )
 
-    # job_card_id = fields.Many2one('job.card.management', string="Job Card")
-    # job_number = fields.Char(string="Job Number", compute="_compute_job_number", store=True)
-    job_number = fields.Char(string="Car ID", store=True)
+
+    # job_number = fields.Char(string="Car ID", store=True)
+    car_id = fields.Many2one('vehicle.details',string="Car ID", store=True)
 
     rfq_created = fields.Boolean(string="RFQ Created", default=False)
 

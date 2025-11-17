@@ -1,0 +1,4 @@
+<odoo>
+    <menuitem id="menu_vehicle_import_root" name="Google Sheet" parent="menu_vehicle_root" sequence="30"/>
+    <menuitem id="menu_vehicle_google_import" name="Import Vehicles" parent="menu_vehicle_import_root" action="vehicle_google_import_action" sequence="40"/>
+</odoo>

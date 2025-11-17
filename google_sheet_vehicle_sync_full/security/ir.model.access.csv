@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vehicle_details,access_vehicle_details,model_vehicle_details,,1,1,1,1
+access_vehicle_google_import,access_vehicle_google_import,model_vehicle_google_import,,1,1,1,1

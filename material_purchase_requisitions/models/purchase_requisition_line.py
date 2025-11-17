@@ -72,8 +72,10 @@ class MaterialPurchaseRequisitionLine(models.Model):
     from_job_card = fields.Boolean(
         string='From Job Card')
 
-    image = fields.Binary(string="Image")
+    # image = fields.Binary(string="Image")
+    image = fields.Image(string="Image")
 
+    
     @api.depends('product_id')
     def _compute_stock_qty(self):
         for rec in self:
