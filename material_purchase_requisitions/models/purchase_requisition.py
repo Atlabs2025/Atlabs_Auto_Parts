@@ -318,6 +318,8 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
+
+
     #@api.multi
     # def requisition_confirm(self):
     #     for rec in self:
