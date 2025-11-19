@@ -72,10 +72,19 @@ class MaterialPurchaseRequisitionLine(models.Model):
     from_job_card = fields.Boolean(
         string='From Job Card')
 
-    # image = fields.Binary(string="Image")
     image = fields.Image(string="Image")
 
-    
+    def action_preview_image(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Image Preview',
+            'view_mode': 'form',
+            'res_model': self._name,
+            'res_id': self.id,
+            'target': 'new',  # popup
+            'views': [(self.env.ref('material_purchase_requisitions.image_preview_form').id, 'form')],
+        }
+
     @api.depends('product_id')
     def _compute_stock_qty(self):
         for rec in self:

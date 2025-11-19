@@ -119,8 +119,17 @@ Email notifications to Department Manager, Requisition Manager for approval.
         'views/purchase_order.xml',
 
     ],
+
+
+
+
+
+
     'installable' : True,
     'application' : False,
 }
+
+
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
