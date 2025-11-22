@@ -6,7 +6,7 @@
     'summary': 'Request For Quotation',
     'description': 'rfq',
     'depends': [
-        'contacts','product','stock','purchase','stock','sale',
+        'contacts','product','stock','purchase','stock','sale','material_purchase_requisitions',
     ],
 'data': [
     'security/ir.model.access.csv',

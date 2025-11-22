@@ -18,6 +18,7 @@ class MaterialPurchaseRequisition(models.Model):
 
     # vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
     vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
+    car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
     vehicle_name = fields.Char(string="Vehicle")
     vin_sn = fields.Char(string="VIN Number")
     requisition_deadline_type = fields.Selection([
@@ -42,7 +43,7 @@ class MaterialPurchaseRequisition(models.Model):
                 raise UserError(_('You can not delete Purchase Requisition which is not in draft or cancelled or rejected state.'))
 #                raise UserError(_('You can not delete Purchase Requisition which is not in draft or cancelled or rejected state.'))
         return super(MaterialPurchaseRequisition, self).unlink()
-    
+
     name = fields.Char(
         string='Number',
         index=True,
@@ -50,13 +51,16 @@ class MaterialPurchaseRequisition(models.Model):
     )
     state = fields.Selection([
         ('draft', 'New'),
+        ('rfq', 'RFQ'),
         ('dept_confirm', 'Waiting Department Approval'),
         ('ir_approve', 'Waiting IR Approval'),
         ('approve', 'Approved'),
         ('stock', 'Purchase Order Created'),
         ('receive', 'Received'),
         ('cancel', 'Cancelled'),
-        ('reject', 'Rejected')],
+        ('reject', 'Rejected'),
+        ('purchase', 'Purchase Order')
+    ],
         default='draft',
         # tracking=True,
         tracking=True
@@ -136,8 +140,8 @@ class MaterialPurchaseRequisition(models.Model):
 
 
     date_done = fields.Date(
-        string='Date Done', 
-        readonly=True, 
+        string='Date Done',
+        readonly=True,
         help='Date of Completion of Purchase Requisition',
     )
     managerapp_date = fields.Date(
@@ -207,7 +211,7 @@ class MaterialPurchaseRequisition(models.Model):
         readonly=True,
         copy=False,
     )
-    
+
     purchase_order_ids = fields.One2many(
         'purchase.order',
         'custom_requisition_id',
@@ -221,7 +225,7 @@ class MaterialPurchaseRequisition(models.Model):
 
 
     # job_number = fields.Char(string="Car ID", store=True)
-    car_id = fields.Many2one('vehicle.details',string="Car ID", store=True)
+
 
     rfq_created = fields.Boolean(string="RFQ Created", default=False)
 
@@ -245,33 +249,27 @@ class MaterialPurchaseRequisition(models.Model):
                     raise ValidationError(_("Vehicle Name and VIN No are required for non-Inventory departments."))
 
 
-    # @api.model
-    # def create(self, vals):
-    #     _logger.info('Create method called')
-    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
-    #     vals.update({'name': name})
-    #
-    #     # Proceed with creation
-    #     res = super(MaterialPurchaseRequisition, self).create(vals)
-    #
-    #     # Add your logic here to handle related material request
-    #     if res.job_card_id:
-    #         self.env['job.card.material.request'].create({
-    #             # 'job_card_id': res.job_number,
-    #             'employee_id': res.employee_id.id,
-    #             'request_date': res.request_date,
-    #         })
-    #
-    #     return res
+
 
     # def action_open_rfq_form(self):
     #     self.ensure_one()
     #
-    #     rfq_line_vals = [(0, 0, {
-    #         'product_id': line.product_id.id,
-    #         'product_qty': line.qty,
-    #         'price_unit': line.cost_price or 0.0,
-    #     }) for line in self.requisition_line_ids]  # ✅ Correct field name
+    #     rfq_line_vals = []
+    #     for line in self.requisition_line_ids:
+    #         # ✅ Ensure product exists (avoid NewId errors)
+    #         if not line.product_id or not line.product_id.id:
+    #             continue
+    #
+    #         rfq_line_vals.append((0, 0, {
+    #             'product_id': line.product_id.id,
+    #             'product_qty': line.qty,
+    #             'price_unit': line.cost_price or 0.0,
+    #             'part_type': line.part_type or False,
+    #             'part_no': line.part_no or False,
+    #         }))
+    #
+    #     # new boolean field added
+    #     self.rfq_created = True
     #
     #     return {
     #         'type': 'ir.actions.act_window',
@@ -280,6 +278,8 @@ class MaterialPurchaseRequisition(models.Model):
     #         'target': 'current',
     #         'context': {
     #             'default_line_ids': rfq_line_vals,
+    #             'default_vehicle_name': self.vehicle_name if self.vehicle_name else False,
+    #             'default_vin_sn': self.vin_sn or False,
     #         },
     #     }
 
@@ -288,8 +288,7 @@ class MaterialPurchaseRequisition(models.Model):
 
         rfq_line_vals = []
         for line in self.requisition_line_ids:
-            # ✅ Ensure product exists (avoid NewId errors)
-            if not line.product_id or not line.product_id.id:
+            if not line.product_id.id:
                 continue
 
             rfq_line_vals.append((0, 0, {
@@ -300,7 +299,8 @@ class MaterialPurchaseRequisition(models.Model):
                 'part_no': line.part_no or False,
             }))
 
-        # new boolean field added
+        # Update state of material requisition
+        self.state = 'rfq'
         self.rfq_created = True
 
         return {
@@ -310,13 +310,14 @@ class MaterialPurchaseRequisition(models.Model):
             'target': 'current',
             'context': {
                 'default_line_ids': rfq_line_vals,
-                'default_vehicle_name': self.vehicle_name if self.vehicle_name else False,
-                'default_vin_sn': self.vin_sn or False,
+                'default_material_requisition_id': self.id,
+                'default_car_id': self.car_id.id if self.car_id else False,
+                'default_vehicle_name': self.vehicle_name or '',
+                'default_vin_sn': self.vin_sn or '',
+
+
             },
         }
-
-
-
 
 
 
@@ -745,9 +746,9 @@ class MaterialPurchaseRequisition(models.Model):
     @api.model
     def _prepare_po_line(self, line=False, purchase_order=False):
         seller = line.product_id._select_seller(
-                partner_id=self._context.get('partner_id'), 
+                partner_id=self._context.get('partner_id'),
                 quantity=line.qty,
-                date=purchase_order.date_order and purchase_order.date_order.date(), 
+                date=purchase_order.date_order and purchase_order.date_order.date(),
                 uom_id=line.uom
                 )
         po_line_vals = {
@@ -764,7 +765,7 @@ class MaterialPurchaseRequisition(models.Model):
                 'custom_requisition_line_id': line.id
         }
         return po_line_vals
-    
+
     #@api.multi
     def request_stock(self):
         stock_obj = self.env['stock.picking']
@@ -802,14 +803,14 @@ class MaterialPurchaseRequisition(models.Model):
                         'custom_requisition_id' : rec.id,
                         'origin' : rec.name,
                         'company_id' : rec.company_id.id,
-                        
+
                     }
                 stock_id = stock_obj.sudo().create(picking_vals)
                 delivery_vals = {
                         'delivery_picking_id' : stock_id.id,
                     }
                 rec.write(delivery_vals)
-                
+
             po_dict = {}
             for line in rec.requisition_line_ids:
                 if line.requisition_type =='internal':
@@ -881,23 +882,23 @@ class MaterialPurchaseRequisition(models.Model):
 #                            }
                             purchase_line_obj.sudo().create(po_line_vals)
                 # rec.state = 'stock'
-    
+
     #@api.multi
     def action_received(self):
         for rec in self:
             rec.receive_date = fields.Date.today()
             rec.state = 'receive'
-    
+
     #@api.multi
     def action_cancel(self):
         for rec in self:
             rec.state = 'cancel'
-    
+
     @api.onchange('employee_id')
     def set_department(self):
         for rec in self:
             rec.department_id = rec.employee_id.sudo().department_id.id
-            rec.dest_location_id = rec.employee_id.sudo().dest_location_id.id or rec.employee_id.sudo().department_id.dest_location_id.id 
+            rec.dest_location_id = rec.employee_id.sudo().dest_location_id.id or rec.employee_id.sudo().department_id.dest_location_id.id
 
     #@api.multi
     def show_picking(self):
@@ -908,7 +909,7 @@ class MaterialPurchaseRequisition(models.Model):
         res = self.env['ir.actions.act_window']._for_xml_id('stock.action_picking_tree_all')
         res['domain'] = str([('custom_requisition_id','=',self.id)])
         return res
-        
+
     #@api.multi
     # def action_show_po(self):
     #     # for rec in self:

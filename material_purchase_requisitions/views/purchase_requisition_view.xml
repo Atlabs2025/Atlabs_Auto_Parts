@@ -24,7 +24,7 @@
 
 
                         <field name="state" widget="statusbar" string="confirm"  
-                                        statusbar_visible="draft,dept_confirm,ir_approve,approve"/>
+                                        statusbar_visible="draft,rfq,dept_confirm,ir_approve,approve,purchase"/>
                     </header>
                     <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -59,6 +59,7 @@
 <!--                                    <field name="date_end" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>-->
                                     <field name="date_end"/>
                                     <field name="vehicle_id" invisible="1"/>
+                                    <field name="car_id"/>
                                     <field name="vehicle_name"/>
                                     <field name="vin_sn"/>
                                     <field name="requisition_deadline_type"/>
