@@ -22,9 +22,6 @@
 
             <sheet>
 
-
-
-
                 <div class="oe_button_box" name="button_box">
                     <button name="action_view_rfq" type="object" class="oe_stat_button"
                             icon="fa-shopping-cart"
@@ -43,8 +40,16 @@
                     <field name="supplier_ids" widget="many2many_tags"  domain="[('supplier_rank', '>', 0)]"/>
                     <field name="state" readonly="1"/>
                     <field name="vehicle_id" readonly="1" invisible="1"/>
+
+                    <field name="car_id" readonly="1" />
                     <field name="vehicle_name" readonly="1" />
                     <field name="vin_sn" readonly="1"/>
+                    <field name="material_requisition_id"/>
+
+
+
+
+
                 </group>
 
                 <notebook>

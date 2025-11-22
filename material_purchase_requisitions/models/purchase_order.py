@@ -16,11 +16,20 @@ class PurchaseOrder(models.Model):
     )
 
     vehicle_id = fields.Many2one('fleet.vehicle', string='Vehicle')
+    car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
     vehicle_name = fields.Char(string='Vehicle')
     vin_sn = fields.Char(string='VIN/SN')
 
+    @api.onchange('car_id')
+    def _onchange_car_id(self):
+        if self.car_id:
+            self.vin_sn = self.car_id.vin_sn
+            self.vehicle_name = self.car_id.title_en
+        else:
+            self.vin_sn = False
+            self.vehicle_name = False
 
-# code by arvind
+    # code by arvind
     def action_send_whatsapp_pdf(self):
         for rec in self:
             if not rec.partner_id or not rec.partner_id.mobile:
