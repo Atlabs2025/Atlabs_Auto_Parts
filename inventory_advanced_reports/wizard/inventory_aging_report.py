@@ -93,7 +93,7 @@ class InventoryAgingReport(models.TransientModel):
             LEFT JOIN stock_picking_type spt ON sm.picking_type_id = spt.id
             LEFT JOIN res_company company ON sm.company_id = company.id
             INNER JOIN stock_valuation_layer svl ON svl.stock_move_id = sm.id
-            WHERE pt.detailed_type = 'product'
+            WHERE pt.type = 'product'
             AND sm.state = 'done'
                             """
         if self.product_ids or self.category_ids:

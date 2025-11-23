@@ -72,6 +72,18 @@
     </field>
 </record>
 
+    <record id="view_rfq_request_tree" model="ir.ui.view">
+        <field name="name">rfq.request.tree</field>
+        <field name="model">rfq.request</field>
+        <field name="arch" type="xml">
+            <list string="RFQ Requests">
+                <field name="name"/>
+                <field name="material_requisition_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
 
     <record id="action_rfq_request" model="ir.actions.act_window">
         <field name="name">RFQ Requests</field>
