@@ -82,7 +82,7 @@ class AgingReport(models.AbstractModel):
                     LEFT JOIN res_company company ON sm.company_id = company.id
                     INNER JOIN stock_valuation_layer svl ON 
                     svl.stock_move_id = sm.id
-                    WHERE pt.detailed_type = 'product'
+                    WHERE pt.type = 'product'
                     AND sm.state = 'done'
                                     """
         if product_ids or category_ids:

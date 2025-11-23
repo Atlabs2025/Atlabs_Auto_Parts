@@ -36,7 +36,7 @@ class RFQRequest(models.Model):
 
     material_requisition_id = fields.Many2one(
         'material.purchase.requisition',
-        string='Material Requisition'
+        string='Material Requisition',store=True,readonly=True,
     )
 
 
@@ -50,42 +50,6 @@ class RFQRequest(models.Model):
         return super().create(vals)
 
 
-
-
-
-    # def action_confirm(self):
-    #     """Create multiple Purchase Orders for selected suppliers"""
-    #     for rec in self:
-    #         if not rec.supplier_ids:
-    #             raise UserError("Please select at least one supplier.")
-    #         if not rec.line_ids:
-    #             raise UserError("Please add at least one product line.")
-    #
-    #         for supplier in rec.supplier_ids:
-    #             po_vals = {
-    #                 'partner_id': supplier.id,
-    #                 'rfq_request_id': rec.id,
-    #                 'vehicle_id': rec.vehicle_id.id if rec.vehicle_id else False,
-    #                 'vin_sn': rec.vin_sn or False,
-    #                 'order_line': [],
-    #             }
-    #
-    #             order_lines = []
-    #             for line in rec.line_ids:
-    #                 order_lines.append((0, 0, {
-    #                     'part_type':line.part_type,
-    #                     'part_no':line.part_no,
-    #                     'product_id': line.product_id.id,
-    #                     'name': line.product_id.display_name,
-    #                     'product_qty': line.product_qty,
-    #                     # 'price_unit': line.price_unit,
-    #                     'price_unit': 0.0,
-    #                     'date_planned': fields.Date.today(),
-    #                 }))
-    #             po_vals['order_line'] = order_lines
-    #             self.env['purchase.order'].create(po_vals)
-    #
-    #         rec.state = 'confirmed'
  # problem of comfirming solved
 
     # def action_confirm(self):
