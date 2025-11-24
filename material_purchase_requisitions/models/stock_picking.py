@@ -19,7 +19,7 @@ class StockPicking(models.Model):
         'hr.employee',
         string='Employee',
         default=lambda self: self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1),
-        required=True,
+        # required=True,
         copy=True,
     )
 
@@ -28,7 +28,7 @@ class StockPicking(models.Model):
     department_id = fields.Many2one(
         'hr.department',
         string='Department',
-        required=True,
+        # required=True,
         copy=True,
     )
 

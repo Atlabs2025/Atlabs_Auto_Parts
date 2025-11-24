@@ -48,10 +48,6 @@
                     <field name="department_id" invisible="1"/>
 
 
-
-
-
-
                 </group>
 
                 <notebook>
@@ -87,6 +83,24 @@
             </list>
         </field>
     </record>
+
+
+    <record id="view_rfq_request_search" model="ir.ui.view">
+    <field name="name">rfq.request.search</field>
+    <field name="model">rfq.request</field>
+    <field name="arch" type="xml">
+        <search string="Search RFQ">
+            <field name="name"/>
+            <field name="car_id"/>
+            <field name="vehicle_name"/>
+            <field name="vin_sn"/>
+            <field name="material_requisition_id"/>
+            <field name="department_id"/>
+            <field name="state"/>
+        </search>
+    </field>
+</record>
+
 
 
     <record id="action_rfq_request" model="ir.actions.act_window">
