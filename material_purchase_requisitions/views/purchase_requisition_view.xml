@@ -141,6 +141,9 @@
                     <field name="name"/>
                     <field name="employee_id"/>
                     <field name="department_id"/>
+                    <field name="car_id"/>
+                    <field name="vehicle_name"/>
+                    <field name="vin_sn"/>
                     <field name="request_date"/>
                     <field name="date_end"/>
                     <field name="company_id" groups="base.group_multi_company"/>

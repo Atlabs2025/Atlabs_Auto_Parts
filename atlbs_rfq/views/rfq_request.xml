@@ -78,6 +78,9 @@
                 <field name="name"/>
                 <field name="material_requisition_id"/>
                 <field name="department_id"/>
+                <field name="car_id"/>
+                <field name="vehicle_name"/>
+                <field name="vin_sn"/>
                 <field name="state"/>
 
             </list>

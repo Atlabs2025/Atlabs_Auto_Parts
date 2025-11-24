@@ -32,8 +32,6 @@
     </record>
 
 
-
-    <odoo>
     <record id="purchase_order_search_inherit_car_fields" model="ir.ui.view">
         <field name="name">purchase.order.search.inherit.car.fields</field>
         <field name="model">purchase.order</field>
@@ -49,7 +47,24 @@
 
         </field>
     </record>
-</odoo>
+
+
+
+    <record id="view_purchase_order_tree_inherit_car_fields" model="ir.ui.view">
+        <field name="name">purchase.order.tree.inherit.car.fields</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+
+            <!-- Insert after vendor -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="car_id"/>
+                <field name="vehicle_name"/>
+                <field name="vin_sn"/>
+            </xpath>
+
+        </field>
+    </record>
 
 
 
