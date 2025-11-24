@@ -42,24 +42,25 @@ class ProductTemplate(models.Model):
             oe_names = rec.oe_number_line_ids.mapped('oe_number_id.name')
             rec.oe_number_names = ', '.join(oe_names)
 
-    # def name_get(self):
-    #     result = []
-    #     for product in self:
-    #         name = product.default_code or product.name
-    #         result.append((product.id, name))
-    #     return result
-
-    # def name_get(self):
-    #     result = []
-    #     for rec in self:
-    #         if rec.default_code:
-    #             name = rec.default_code
-    #         else:
-    #             name = rec.name
-    #         result.append((rec.id, name))
-    #     return result
 
 
+
+# highly dangerous code added for enabling tracking
+    @api.constrains('tracking')
+    def _check_tracking(self):
+        # ⚠️ Dangerous override: completely disable Odoo’s tracking change protection
+        # Allows changing tracking even if stock moves already exist
+        return True
+
+
+# highly dangerous code added for enabling tracking
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    @api.constrains('tracking')
+    def _check_tracking(self):
+        return True
+###########
 
 class ProductGroup(models.Model):
     _name = 'product.group'
