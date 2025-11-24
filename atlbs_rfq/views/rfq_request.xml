@@ -45,6 +45,8 @@
                     <field name="vehicle_name" readonly="1" />
                     <field name="vin_sn" readonly="1"/>
                     <field name="material_requisition_id"/>
+                    <field name="department_id" invisible="1"/>
+
 
 
 
@@ -79,7 +81,9 @@
             <list string="RFQ Requests">
                 <field name="name"/>
                 <field name="material_requisition_id"/>
+                <field name="department_id"/>
                 <field name="state"/>
+
             </list>
         </field>
     </record>
