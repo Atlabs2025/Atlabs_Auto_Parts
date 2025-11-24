@@ -59,7 +59,7 @@
 <!--                                    <field name="date_end" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>-->
                                     <field name="date_end"/>
                                     <field name="vehicle_id" invisible="1"/>
-                                    <field name="car_id"/>
+<!--                                    <field name="car_id"/>-->
                                     <field name="vehicle_name"/>
                                     <field name="vin_sn"/>
                                     <field name="requisition_deadline_type"/>
@@ -171,6 +171,9 @@
                     <field name="delivery_picking_id"/>
                     <field name="reason"/>
                     <field name="state"/>
+                    <field name="car_id"/>
+                    <field name="vehicle_name"/>
+                    <field name="vin_sn"/>
                     <group expand="0" string="Group By">
                         <filter string="Employee" name="employee_id" context="{'group_by':'employee_id'}"/>
                         <filter string="Reqisition Date" name="request_date" context="{'group_by':'request_date'}"/>
@@ -187,6 +190,10 @@
                         <filter string="Reason" name="reason" context="{'group_by':'reason'}"/>
                         <filter string="Date Done" name="date_done" context="{'group_by':'date_done'}"/>
                         <filter string="State" name="state" context="{'group_by':'state'}"/>
+<!--                        <filter string="Car" name="car_id" context="{'group_by': 'car_id'}"/>-->
+<!--                        <filter string="Vehicle Name" name="vehicle_name" context="{'group_by': 'vehicle_name'}"/>-->
+<!--                        <filter string="VIN Number" name="vin_sn" context="{'group_by': 'vin_sn'}"/>-->
+
                     </group>
                 </search>
             </field>

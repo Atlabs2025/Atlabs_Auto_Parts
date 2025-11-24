@@ -51,7 +51,8 @@ class RFQRequest(models.Model):
         return super().create(vals)
 
 
- # problem of comfirming solved
+
+    # problem of comfirming solved
 
     # def action_confirm(self):
     #     for rec in self:
@@ -165,6 +166,8 @@ class RFQRequest(models.Model):
             rec.rfq_count = self.env['purchase.order'].search_count([
                 ('rfq_request_id', '=', rec.id)
             ])
+
+
 
     def action_view_rfq(self):
         return {

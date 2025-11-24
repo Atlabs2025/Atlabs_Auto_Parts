@@ -31,4 +31,27 @@
         </field>
     </record>
 
+
+
+    <odoo>
+    <record id="purchase_order_search_inherit_car_fields" model="ir.ui.view">
+        <field name="name">purchase.order.search.inherit.car.fields</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+
+            <!-- Add search fields after PO name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="car_id"/>
+                <field name="vehicle_name"/>
+                <field name="vin_sn"/>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
+
+
+
+
 </odoo>
