@@ -39,9 +39,10 @@ class RFQRequest(models.Model):
         string='Material Requisition',store=True,readonly=True,
     )
 
-
-
-
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Department',store=True,readonly=True,
+    )
 
     @api.model
     def create(self, vals):

@@ -314,6 +314,7 @@ class MaterialPurchaseRequisition(models.Model):
                 'default_car_id': self.car_id.id if self.car_id else False,
                 'default_vehicle_name': self.vehicle_name or '',
                 'default_vin_sn': self.vin_sn or '',
+                'default_department_id': self.department_id.id if self.department_id else False,
 
 
             },
