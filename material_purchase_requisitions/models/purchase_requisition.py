@@ -724,9 +724,14 @@ class MaterialPurchaseRequisition(models.Model):
         return True
 
     #@api.multi
+    # def reset_draft(self):
+    #     for rec in self:
+    #         rec.state = 'draft'
+# added this function for viewing rfq button when the state is in draft
     def reset_draft(self):
         for rec in self:
             rec.state = 'draft'
+            rec.rfq_created = False
 
     @api.model
     def _prepare_pick_vals(self, line=False, stock_id=False):
