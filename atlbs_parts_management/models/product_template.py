@@ -46,20 +46,20 @@ class ProductTemplate(models.Model):
 
 
 # highly dangerous code added for enabling tracking
-    @api.constrains('tracking')
-    def _check_tracking(self):
-        # ⚠️ Dangerous override: completely disable Odoo’s tracking change protection
-        # Allows changing tracking even if stock moves already exist
-        return True
+#     @api.constrains('tracking')
+#     def _check_tracking(self):
+#         # ⚠️ Dangerous override: completely disable Odoo’s tracking change protection
+#         # Allows changing tracking even if stock moves already exist
+#         return True
 
 
 # highly dangerous code added for enabling tracking
-class ProductProduct(models.Model):
-    _inherit = 'product.product'
-
-    @api.constrains('tracking')
-    def _check_tracking(self):
-        return True
+# class ProductProduct(models.Model):
+#     _inherit = 'product.product'
+#
+#     @api.constrains('tracking')
+#     def _check_tracking(self):
+#         return True
 ###########
 
 class ProductGroup(models.Model):
