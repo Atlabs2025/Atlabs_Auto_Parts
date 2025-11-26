@@ -12,13 +12,19 @@ class MaterialPurchaseRequisitionLine(models.Model):
         'material.purchase.requisition',
         string='Requisitions', 
     )
+    # product_id = fields.Many2one(
+    #     'product.product',
+    #     string='Product',
+    #     # required=True,
+    # )
+
     product_id = fields.Many2one(
         'product.product',
         string='Product',
-        # required=True,
-    )
+        domain="[('type', '=', 'service')] if requisition_type == 'purchase' else[]")
 
-#     layout_category_id = fields.Many2one(
+
+    #     layout_category_id = fields.Many2one(
 #         'sale.layout_category',
 #         string='Section',
 #     )
@@ -73,6 +79,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
         string='From Job Card')
 
     image = fields.Image(string="Image")
+    is_stock = fields.Boolean(string="Stock Available", default=False)
 
     def action_preview_image(self):
         return {
@@ -90,15 +97,40 @@ class MaterialPurchaseRequisitionLine(models.Model):
         for rec in self:
             rec.stock_qty = rec.product_id.qty_available if rec.product_id else 0.0
 # commented default code
+#     @api.onchange('product_id')
+#     def onchange_product_id(self):
+#         for rec in self:
+#             # rec.description = rec.product_id.name
+#             rec.description = rec.product_id.display_name
+#             rec.uom = rec.product_id.uom_id.id
+#             rec.part_no =rec.product_id.default_code
+#             # rec.sale_price =rec.product_id.lst_price
+#             rec.cost_price =rec.product_id.standard_price
+
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
-            # rec.description = rec.product_id.name
-            rec.description = rec.product_id.display_name
-            rec.uom = rec.product_id.uom_id.id
-            rec.part_no =rec.product_id.default_code
-            # rec.sale_price =rec.product_id.lst_price
-            rec.cost_price =rec.product_id.standard_price
+            if rec.product_id:
+                rec.description = rec.product_id.display_name
+                rec.uom = rec.product_id.uom_id.id
+                rec.part_no = rec.product_id.default_code
+                rec.cost_price = rec.product_id.standard_price
+
+                # ✔ Auto tick is_stock based on available quantity
+                rec.is_stock = rec.product_id.qty_available > 0
+            else:
+                rec.description = False
+                rec.uom = False
+                rec.part_no = False
+                rec.cost_price = False
+                rec.is_stock = False
+
+    @api.onchange('requisition_type')
+    def _onchange_requisition_type(self):
+        if self.requisition_type == 'purchase':
+            self.is_stock = False
+
+
 
     @api.onchange('part_no')
     def _onchange_part_no(self):

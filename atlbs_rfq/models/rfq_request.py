@@ -107,13 +107,64 @@ class RFQRequest(models.Model):
     #             rec.material_requisition_id.state = 'rfq'
     #         rec.state = 'confirmed'
 
+    # def action_confirm(self):
+    #     for rec in self:
+    #         if not rec.supplier_ids:
+    #             raise UserError("Please select at least one supplier.")
+    #         if not rec.line_ids:
+    #             raise UserError("Please add at least one product line.")
+    #
+    #         picking_type = self.env['stock.picking.type'].search([
+    #             ('code', '=', 'incoming'),
+    #             ('warehouse_id.company_id', '=', self.env.company.id)
+    #         ], limit=1)
+    #
+    #         if not picking_type:
+    #             picking_type = self.env['stock.picking.type'].search([
+    #                 ('code', '=', 'internal'),
+    #                 ('warehouse_id.company_id', '=', self.env.company.id)
+    #             ], limit=1)
+    #
+    #         if not picking_type:
+    #             raise UserError(
+    #                 "No picking type found for this company. Please configure it in Inventory > Settings."
+    #             )
+    #
+    #         for supplier in rec.supplier_ids:
+    #             po_vals = {
+    #                 'partner_id': supplier.id,
+    #                 'rfq_request_id': rec.id,
+    #                 'car_id': rec.car_id.id if rec.car_id else False,
+    #                 'vehicle_name': rec.vehicle_name if rec.vehicle_name else False,
+    #                 'vin_sn': rec.vin_sn or False,
+    #                 'picking_type_id': picking_type.id,
+    #                 # 'material_requisition_id': rec.material_requisition_id.id,
+    #                 'order_line': [],
+    #             }
+    #
+    #             order_lines = []
+    #             for line in rec.line_ids:
+    #                 order_lines.append((0, 0, {
+    #                     'part_type': line.part_type,
+    #                     'part_no': line.part_no,
+    #                     'product_id': line.product_id.id,
+    #                     'name': line.product_id.display_name,
+    #                     'product_qty': line.product_qty,
+    #                     'price_unit': 0.0,
+    #                     'date_planned': fields.Date.today(),
+    #                 }))
+    #             po_vals['order_line'] = order_lines
+    #
+    #             self.env['purchase.order'].create(po_vals)
+    #
+    #         rec.state = 'confirmed'
+
     def action_confirm(self):
         for rec in self:
-            if not rec.supplier_ids:
-                raise UserError("Please select at least one supplier.")
             if not rec.line_ids:
                 raise UserError("Please add at least one product line.")
 
+            # Get picking type
             picking_type = self.env['stock.picking.type'].search([
                 ('code', '=', 'incoming'),
                 ('warehouse_id.company_id', '=', self.env.company.id)
@@ -126,25 +177,26 @@ class RFQRequest(models.Model):
                 ], limit=1)
 
             if not picking_type:
-                raise UserError(
-                    "No picking type found for this company. Please configure it in Inventory > Settings."
-                )
+                raise UserError("No picking type configured for this company.")
 
-            for supplier in rec.supplier_ids:
-                po_vals = {
-                    'partner_id': supplier.id,
-                    'rfq_request_id': rec.id,
-                    'car_id': rec.car_id.id if rec.car_id else False,
-                    'vehicle_name': rec.vehicle_name if rec.vehicle_name else False,
-                    'vin_sn': rec.vin_sn or False,
-                    'picking_type_id': picking_type.id,
-                    # 'material_requisition_id': rec.material_requisition_id.id,
-                    'order_line': [],
-                }
+            # ---------------------------------------------------------------
+            # 1. GROUP LINES BY SUPPLIER (inside each line)
+            # ---------------------------------------------------------------
+            line_supplier_groups = {}
+            for line in rec.line_ids:
+                if line.supplier_id:
+                    line_supplier_groups.setdefault(line.supplier_id.id, []).append(line)
 
-                order_lines = []
-                for line in rec.line_ids:
-                    order_lines.append((0, 0, {
+            created_suppliers = set()
+
+            # ---------------------------------------------------------------
+            # 2. CREATE PURCHASE ORDER FOR LINE-SUPPLIER ITEMS
+            # ---------------------------------------------------------------
+            for supplier_id, lines in line_supplier_groups.items():
+
+                po_line_vals = []
+                for line in lines:
+                    po_line_vals.append((0, 0, {
                         'part_type': line.part_type,
                         'part_no': line.part_no,
                         'product_id': line.product_id.id,
@@ -153,13 +205,70 @@ class RFQRequest(models.Model):
                         'price_unit': 0.0,
                         'date_planned': fields.Date.today(),
                     }))
-                po_vals['order_line'] = order_lines
+
+                po_vals = {
+                    'partner_id': supplier_id,
+                    'rfq_request_id': rec.id,
+                    'car_id': rec.car_id.id if rec.car_id else False,
+                    'vehicle_name': rec.vehicle_name or False,
+                    'vin_sn': rec.vin_sn or False,
+                    'picking_type_id': picking_type.id,
+                    'order_line': po_line_vals,
+                }
+
+                self.env['purchase.order'].create(po_vals)
+                created_suppliers.add(supplier_id)
+
+            # ---------------------------------------------------------------
+            # 3. CREATE PO FOR SUPPLIERS SELECTED IN supplier_ids
+            #    Add only lines WITHOUT supplier_id
+            # ---------------------------------------------------------------
+            for supplier in rec.supplier_ids:
+
+                # Skip if already created from step 2
+                if supplier.id in created_suppliers:
+                    continue
+
+                po_line_vals = []
+
+                for line in rec.line_ids:
+
+                    # ❌ Skip items that belong to other suppliers
+                    if line.supplier_id and line.supplier_id.id != supplier.id:
+                        continue
+
+                    # ✔ Add lines WITHOUT supplier
+                    if not line.supplier_id:
+                        po_line_vals.append((0, 0, {
+                            'part_type': line.part_type,
+                            'part_no': line.part_no,
+                            'product_id': line.product_id.id,
+                            'name': line.product_id.display_name,
+                            'product_qty': line.product_qty,
+                            'price_unit': 0.0,
+                            'date_planned': fields.Date.today(),
+                        }))
+
+                # If this supplier has no lines → skip creation
+                if not po_line_vals:
+                    continue
+
+                po_vals = {
+                    'partner_id': supplier.id,
+                    'rfq_request_id': rec.id,
+                    'car_id': rec.car_id.id if rec.car_id else False,
+                    'vehicle_name': rec.vehicle_name or False,
+                    'vin_sn': rec.vin_sn or False,
+                    'picking_type_id': picking_type.id,
+                    'order_line': po_line_vals,
+                }
 
                 self.env['purchase.order'].create(po_vals)
 
+            # ---------------------------------------------------------------
+            # UPDATE STATE
+            # ---------------------------------------------------------------
             rec.state = 'confirmed'
-
-
 
     def _compute_rfq_count(self):
         for rec in self:
@@ -197,7 +306,10 @@ class RFQManagementLine(models.Model):
     price_unit = fields.Float(string='Unit Price')
     # image = fields.Binary(string="Image")
 
-
+    supplier_id = fields.Many2one(
+        'res.partner',
+        string="Supplier")
+    # domain = [('supplier_rank', '>', 0)]
 
 
 class PurchaseOrder(models.Model):

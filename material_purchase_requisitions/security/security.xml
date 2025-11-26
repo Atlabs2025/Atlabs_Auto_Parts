@@ -52,5 +52,24 @@
 
 
 
+
+<!--        <record id="group_requisition_view_user" model="res.groups">-->
+<!--            <field name="name">Requisition View User</field>-->
+<!--&lt;!&ndash;            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>&ndash;&gt;-->
+<!--        </record>-->
+
+
+<!--        <record id="requisition_view_user_rule" model="ir.rule">-->
+<!--            <field name="name">Requisition View User Rule</field>-->
+<!--            <field name="model_id" ref="model_material_purchase_requisition"/>-->
+<!--            <field name="groups" eval="[(4, ref('material_purchase_requisitions.group_requisition_view_user'))]"/>-->
+<!--            <field name="domain_force">[('state', '!=', 'approve')]</field>-->
+<!--        </record>-->
+
+
+
+
+
+
     </data>
 </odoo>

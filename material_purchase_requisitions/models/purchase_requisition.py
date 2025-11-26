@@ -26,6 +26,8 @@ class MaterialPurchaseRequisition(models.Model):
         ('urgent', 'Urgent'),
     ], string='Requisition Deadline Type', default='normal', tracking=True)
 
+
+
     @api.onchange('car_id')
     def _onchange_car_id(self):
         if self.car_id:
@@ -229,6 +231,20 @@ class MaterialPurchaseRequisition(models.Model):
 
     rfq_created = fields.Boolean(string="RFQ Created", default=False)
 
+    has_non_stock_line = fields.Boolean(
+        compute="_compute_has_non_stock_line",
+        store=False
+    )
+
+    @api.depends('requisition_line_ids.is_stock')
+    def _compute_has_non_stock_line(self):
+        for rec in self:
+            # True if any line has is_stock = False
+            rec.has_non_stock_line = any(
+                line.is_stock == False
+                for line in rec.requisition_line_ids
+            )
+
 
     @api.model
     def create(self, vals):
@@ -251,13 +267,13 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
+
     # def action_open_rfq_form(self):
     #     self.ensure_one()
     #
     #     rfq_line_vals = []
     #     for line in self.requisition_line_ids:
-    #         # ✅ Ensure product exists (avoid NewId errors)
-    #         if not line.product_id or not line.product_id.id:
+    #         if not line.product_id.id:
     #             continue
     #
     #         rfq_line_vals.append((0, 0, {
@@ -268,7 +284,8 @@ class MaterialPurchaseRequisition(models.Model):
     #             'part_no': line.part_no or False,
     #         }))
     #
-    #     # new boolean field added
+    #     # Update state of material requisition
+    #     self.state = 'rfq'
     #     self.rfq_created = True
     #
     #     return {
@@ -278,8 +295,56 @@ class MaterialPurchaseRequisition(models.Model):
     #         'target': 'current',
     #         'context': {
     #             'default_line_ids': rfq_line_vals,
-    #             'default_vehicle_name': self.vehicle_name if self.vehicle_name else False,
-    #             'default_vin_sn': self.vin_sn or False,
+    #             'default_material_requisition_id': self.id,
+    #             'default_car_id': self.car_id.id if self.car_id else False,
+    #             'default_vehicle_name': self.vehicle_name or '',
+    #             'default_vin_sn': self.vin_sn or '',
+    #             'default_department_id': self.department_id.id if self.department_id else False,
+    #
+    #
+    #         },
+    #     }
+
+    # def action_open_rfq_form(self):
+    #     self.ensure_one()
+    #
+    #     rfq_line_vals = []
+    #     for line in self.requisition_line_ids:
+    #         # Add only NON-STOCK ITEMS (is_stock == False)
+    #         if line.is_stock:
+    #             continue
+    #
+    #         if not line.product_id.id:
+    #             continue
+    #
+    #         rfq_line_vals.append((0, 0, {
+    #             'product_id': line.product_id.id,
+    #             'product_qty': line.qty,
+    #             'price_unit': line.cost_price or 0.0,
+    #             'part_type': line.part_type or False,
+    #             'part_no': line.part_no or False,
+    #         }))
+    #
+    #     # If no non-stock items exist, block RFQ creation
+    #     if not rfq_line_vals:
+    #         raise UserError("All items are stock items. No RFQ needed.")
+    #
+    #     # Update state of material requisition
+    #     self.state = 'rfq'
+    #     self.rfq_created = True
+    #
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'rfq.request',
+    #         'view_mode': 'form',
+    #         'target': 'current',
+    #         'context': {
+    #             'default_line_ids': rfq_line_vals,
+    #             'default_material_requisition_id': self.id,
+    #             'default_car_id': self.car_id.id if self.car_id else False,
+    #             'default_vehicle_name': self.vehicle_name or '',
+    #             'default_vin_sn': self.vin_sn or '',
+    #             'default_department_id': self.department_id.id if self.department_id else False,
     #         },
     #     }
 
@@ -287,8 +352,16 @@ class MaterialPurchaseRequisition(models.Model):
         self.ensure_one()
 
         rfq_line_vals = []
+
         for line in self.requisition_line_ids:
-            if not line.product_id.id:
+
+            # Include line if:
+            #   - it is NOT stock  OR
+            #   - requisition type is purchase (must buy)
+            if line.is_stock and line.requisition_type != 'purchase':
+                continue
+
+            if not line.product_id:
                 continue
 
             rfq_line_vals.append((0, 0, {
@@ -299,7 +372,9 @@ class MaterialPurchaseRequisition(models.Model):
                 'part_no': line.part_no or False,
             }))
 
-        # Update state of material requisition
+        if not rfq_line_vals:
+            raise UserError("All items are stock items. No RFQ needed.")
+
         self.state = 'rfq'
         self.rfq_created = True
 
@@ -315,46 +390,14 @@ class MaterialPurchaseRequisition(models.Model):
                 'default_vehicle_name': self.vehicle_name or '',
                 'default_vin_sn': self.vin_sn or '',
                 'default_department_id': self.department_id.id if self.department_id else False,
-
-
             },
         }
-
-
-
-    #@api.multi
-    # def requisition_confirm(self):
-    #     for rec in self:
-    #         manager_mail_template = self.env.ref('material_purchase_requisitions.email_confirm_material_purchase_requistion')
-    #         rec.employee_confirm_id = rec.employee_id.id
-    #         rec.confirm_date = fields.Date.today()
-    #         rec.state = 'dept_confirm'
-    #         if manager_mail_template:
-    #             manager_mail_template.send_mail(self.id)
 
     # @api.multi
 
     # habeeb sir ideas
 
 
-    # def requisition_confirm(self):
-    #     for rec in self:
-    #         manager_mail_template = self.env.ref(
-    #             'material_purchase_requisitions.email_confirm_material_purchase_requistion')
-    #         rec.employee_confirm_id = rec.employee_id.id
-    #         rec.confirm_date = fields.Date.today()
-    #         rec.state = 'dept_confirm'
-    #
-    #         # ✅ Safely check if job_card_id exists
-    #         if rec.job_card_id:
-    #             job_card_material_requests = self.env['job.card.material.request'].search([
-    #                 ('state', '=', 'pending')
-    #             ])
-    #             for request in job_card_material_requests:
-    #                 request.state = 'pending'
-    #
-    #         if manager_mail_template:
-    #             manager_mail_template.send_mail(rec.id)
 
 
 # removed pop up told by habeeb sir on oct 10
@@ -571,22 +614,6 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
-
-
-    # def user_approve(self):
-    #     for rec in self:
-    #         rec.userrapp_date = fields.Date.today()
-    #         rec.approve_employee_id = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
-    #         rec.state = 'approve'
-    #
-    #         # ✅ Safely check if job_card_id exists
-    #         if rec.job_card_id:
-    #             job_card_material_requests = self.env['job.card.material.request'].search([
-    #                 ('state', '=', 'pending')
-    #             ])
-    #             for request in job_card_material_requests:
-    #                 request.state = 'completed'
-
     from odoo.exceptions import UserError
  # changed user approve function on oct 22 because if stock not available it should show popup so if need refer abobe old function
  #    def user_approve(self):
@@ -610,7 +637,13 @@ class MaterialPurchaseRequisition(models.Model):
  #                for request in job_card_material_requests:
  #                    request.state = 'completed'
 
+
+
     # def user_approve(self):
+    #     stock_picking = self.env['stock.picking']
+    #     stock_move = self.env['stock.move']
+    #     picking_type_obj = self.env['stock.picking.type']
+    #
     #     for rec in self:
     #         # 🔹 Check material lines for stock availability
     #         for line in rec.requisition_line_ids:
@@ -625,6 +658,172 @@ class MaterialPurchaseRequisition(models.Model):
     #             [('user_id', '=', self.env.uid)], limit=1
     #         )
     #         rec.state = 'approve'
+    #
+    #         # 🔹 Get delivery picking type (stock out)
+    #         delivery_type = picking_type_obj.search([('code', '=', 'outgoing')], limit=1)
+    #         if not delivery_type:
+    #             raise UserError(
+    #                 _('Please configure an outgoing picking type (Delivery Order) in Inventory > Settings.'))
+    #
+    #         # 🔹 Get source & destination locations
+    #         source_location = delivery_type.default_location_src_id
+    #         dest_location = delivery_type.default_location_dest_id
+    #         if not source_location or not dest_location:
+    #             raise UserError(_('Please set source and destination locations for the outgoing picking type.'))
+    #
+    #         # 🔹 Create delivery picking
+    #         picking_vals = {
+    #             'picking_type_id': delivery_type.id,
+    #             'location_id': source_location.id,
+    #             'location_dest_id': dest_location.id,
+    #             'origin': rec.name,
+    #             'company_id': rec.company_id.id,
+    #             'custom_requisition_id': rec.id if 'custom_requisition_id' in stock_picking._fields else False,
+    #             'scheduled_date': fields.Datetime.now(),
+    #             'note': rec.reason if 'reason' in rec._fields else '',
+    #             'employee_id': rec.employee_id.id if 'employee_id' in rec._fields else False,
+    #             'department_id': rec.department_id.id if 'department_id' in rec._fields else False,
+    #             'job_number': rec.job_number if 'job_number' in rec._fields else False,
+    #             'vehicle_name': rec.vehicle_name if 'vehicle_name' in rec._fields else False,
+    #             'vin_sn': rec.vin_sn if 'vin_sn' in rec._fields else False,
+    #         }
+    #         picking = stock_picking.sudo().create(picking_vals)
+    #
+    #         # 🔹 Create stock moves for each requisition line
+    #         for line in rec.requisition_line_ids:
+    #             if not line.product_id:
+    #                 continue
+    #             move_vals = {
+    #                 'name': line.product_id.display_name,
+    #                 'product_id': line.product_id.id,
+    #                 'product_uom_qty': line.qty,
+    #                 'product_uom': line.uom.id if line.uom else line.product_id.uom_id.id,
+    #                 'location_id': source_location.id,
+    #                 'location_dest_id': dest_location.id,
+    #                 'picking_id': picking.id,
+    #                 'company_id': rec.company_id.id,
+    #
+    #
+    #             }
+    #             stock_move.sudo().create(move_vals)
+    #
+    #         # 🔹 Link picking to requisition if field exists
+    #         if 'delivery_picking_id' in rec._fields:
+    #             rec.delivery_picking_id = picking.id
+    #
+    #         # ✅ Auto confirm, assign, and validate picking (mark as done)
+    #         picking.action_confirm()
+    #         picking.action_assign()
+    #
+    #         for move in picking.move_ids_without_package:
+    #             if move.state not in ('done', 'cancel'):
+    #                 # Ensure at least one move line exists
+    #                 if not move.move_line_ids:
+    #                     self.env['stock.move.line'].sudo().create({
+    #                         'move_id': move.id,
+    #                         'product_id': move.product_id.id,
+    #                         'product_uom_id': move.product_uom.id,
+    #                         'quantity': move.product_uom_qty,
+    #                         'location_id': move.location_id.id,
+    #                         'location_dest_id': move.location_dest_id.id,
+    #                         'company_id': move.company_id.id,
+    #                     })
+    #                 else:
+    #                     move.move_line_ids.write({'quantity': move.product_uom_qty})
+    #
+    #         # ✅ Validate picking (mark as Done)
+    #         picking.button_validate()
+    #
+    #     return True
+
+    # def user_approve(self):
+    #     stock_picking = self.env['stock.picking']
+    #     stock_move = self.env['stock.move']
+    #     picking_type_obj = self.env['stock.picking.type']
+    #
+    #     for rec in self:
+    #
+    #         # ✅ Proceed with approval
+    #         rec.userrapp_date = fields.Date.today()
+    #         rec.approve_employee_id = self.env['hr.employee'].search(
+    #             [('user_id', '=', self.env.uid)], limit=1
+    #         )
+    #         rec.state = 'approve'
+    #
+    #         # 🔹 Get delivery picking type (stock out)
+    #         delivery_type = picking_type_obj.search([('code', '=', 'outgoing')], limit=1)
+    #         if not delivery_type:
+    #             raise UserError(
+    #                 _('Please configure an outgoing picking type (Delivery Order) in Inventory > Settings.'))
+    #
+    #         # 🔹 Get source & destination locations
+    #         source_location = delivery_type.default_location_src_id
+    #         dest_location = delivery_type.default_location_dest_id
+    #         if not source_location or not dest_location:
+    #             raise UserError(_('Please set source and destination locations for the outgoing picking type.'))
+    #
+    #         # 🔹 Create delivery picking
+    #         picking_vals = {
+    #             'picking_type_id': delivery_type.id,
+    #             'location_id': source_location.id,
+    #             'location_dest_id': dest_location.id,
+    #             'origin': rec.name,
+    #             'company_id': rec.company_id.id,
+    #             'custom_requisition_id': rec.id if 'custom_requisition_id' in stock_picking._fields else False,
+    #             'scheduled_date': fields.Datetime.now(),
+    #             'note': rec.reason if 'reason' in rec._fields else '',
+    #             'employee_id': rec.employee_id.id if 'employee_id' in rec._fields else False,
+    #             'department_id': rec.department_id.id if 'department_id' in rec._fields else False,
+    #             'job_number': rec.job_number if 'job_number' in rec._fields else False,
+    #             'vehicle_name': rec.vehicle_name if 'vehicle_name' in rec._fields else False,
+    #             'vin_sn': rec.vin_sn if 'vin_sn' in rec._fields else False,
+    #         }
+    #         picking = stock_picking.sudo().create(picking_vals)
+    #
+    #         # 🔹 Create stock moves ONLY for is_stock lines
+    #         stock_lines = rec.requisition_line_ids.filtered(lambda l: l.is_stock)
+    #
+    #         for line in stock_lines:
+    #             if not line.product_id:
+    #                 continue
+    #             move_vals = {
+    #                 'name': line.product_id.display_name,
+    #                 'product_id': line.product_id.id,
+    #                 'product_uom_qty': line.qty,
+    #                 'product_uom': line.uom.id if line.uom else line.product_id.uom_id.id,
+    #                 'location_id': source_location.id,
+    #                 'location_dest_id': dest_location.id,
+    #                 'picking_id': picking.id,
+    #                 'company_id': rec.company_id.id,
+    #             }
+    #             stock_move.sudo().create(move_vals)
+    #
+    #         # 🔹 Link picking to requisition if field exists
+    #         if 'delivery_picking_id' in rec._fields:
+    #             rec.delivery_picking_id = picking.id
+    #
+    #         # ✅ Auto confirm, assign, and validate picking (mark as done)
+    #         picking.action_confirm()
+    #         picking.action_assign()
+    #
+    #         for move in picking.move_ids_without_package:
+    #             if move.state not in ('done', 'cancel'):
+    #                 if not move.move_line_ids:
+    #                     self.env['stock.move.line'].sudo().create({
+    #                         'move_id': move.id,
+    #                         'product_id': move.product_id.id,
+    #                         'product_uom_id': move.product_uom.id,
+    #                         'quantity': move.product_uom_qty,
+    #                         'location_id': move.location_id.id,
+    #                         'location_dest_id': move.location_dest_id.id,
+    #                         'company_id': move.company_id.id,
+    #                     })
+    #                 else:
+    #                     move.move_line_ids.write({'quantity': move.product_uom_qty})
+    #
+    #         picking.button_validate()
+    #
+    #     return True
 
     def user_approve(self):
         stock_picking = self.env['stock.picking']
@@ -632,33 +831,38 @@ class MaterialPurchaseRequisition(models.Model):
         picking_type_obj = self.env['stock.picking.type']
 
         for rec in self:
-            # 🔹 Check material lines for stock availability
-            for line in rec.requisition_line_ids:
-                if line.stock_qty <= 0:
-                    raise UserError(
-                        f"Cannot approve because the stock for product '{line.product_id.display_name}' is not available."
-                    )
 
-            # ✅ Proceed with approval
+            # ====== APPROVE THE REQUISITION ======
             rec.userrapp_date = fields.Date.today()
             rec.approve_employee_id = self.env['hr.employee'].search(
                 [('user_id', '=', self.env.uid)], limit=1
             )
             rec.state = 'approve'
 
-            # 🔹 Get delivery picking type (stock out)
+            # ====== FILTER LINES FOR PICKING ======
+            # Only stock items AND not purchase type
+            stock_lines = rec.requisition_line_ids.filtered(
+                lambda l: l.is_stock and l.requisition_type != 'purchase'
+            )
+
+            # If no lines need picking, skip picking creation
+            if not stock_lines:
+                continue
+
+            # ====== PICKING TYPE ======
             delivery_type = picking_type_obj.search([('code', '=', 'outgoing')], limit=1)
             if not delivery_type:
                 raise UserError(
-                    _('Please configure an outgoing picking type (Delivery Order) in Inventory > Settings.'))
+                    _('Please configure an outgoing picking type (Delivery Order) in Inventory > Settings.')
+                )
 
-            # 🔹 Get source & destination locations
             source_location = delivery_type.default_location_src_id
             dest_location = delivery_type.default_location_dest_id
+
             if not source_location or not dest_location:
                 raise UserError(_('Please set source and destination locations for the outgoing picking type.'))
 
-            # 🔹 Create delivery picking
+            # ====== CREATE PICKING ======
             picking_vals = {
                 'picking_type_id': delivery_type.id,
                 'location_id': source_location.id,
@@ -676,10 +880,11 @@ class MaterialPurchaseRequisition(models.Model):
             }
             picking = stock_picking.sudo().create(picking_vals)
 
-            # 🔹 Create stock moves for each requisition line
-            for line in rec.requisition_line_ids:
+            # ====== CREATE STOCK MOVES FOR ELIGIBLE LINES ======
+            for line in stock_lines:
                 if not line.product_id:
                     continue
+
                 move_vals = {
                     'name': line.product_id.display_name,
                     'product_id': line.product_id.id,
@@ -689,22 +894,19 @@ class MaterialPurchaseRequisition(models.Model):
                     'location_dest_id': dest_location.id,
                     'picking_id': picking.id,
                     'company_id': rec.company_id.id,
-
-
                 }
                 stock_move.sudo().create(move_vals)
 
-            # 🔹 Link picking to requisition if field exists
+            # Link picking to requisition
             if 'delivery_picking_id' in rec._fields:
                 rec.delivery_picking_id = picking.id
 
-            # ✅ Auto confirm, assign, and validate picking (mark as done)
+            # ====== CONFIRM, ASSIGN & VALIDATE ======
             picking.action_confirm()
             picking.action_assign()
 
             for move in picking.move_ids_without_package:
                 if move.state not in ('done', 'cancel'):
-                    # Ensure at least one move line exists
                     if not move.move_line_ids:
                         self.env['stock.move.line'].sudo().create({
                             'move_id': move.id,
@@ -718,7 +920,6 @@ class MaterialPurchaseRequisition(models.Model):
                     else:
                         move.move_line_ids.write({'quantity': move.product_uom_qty})
 
-            # ✅ Validate picking (mark as Done)
             picking.button_validate()
 
         return True

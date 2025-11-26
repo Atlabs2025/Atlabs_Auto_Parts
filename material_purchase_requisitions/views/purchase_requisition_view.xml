@@ -24,9 +24,10 @@
                                 type="object"
                                 string="RFQ"
                                 class="btn-primary"
-                                invisible="state != 'draft' or rfq_created == True"/>
+                                invisible="rfq_created == True or has_non_stock_line == False"/>
+<!--                                invisible="state != 'draft' or rfq_created == True"/>-->
 
-                        <!--                        <button name="action_open_rfq_form" type="object" string="RFQ" class="btn-primary" />-->
+
 
 
                         <field name="state" widget="statusbar" string="confirm"  
@@ -77,6 +78,7 @@
                                 <field name="requisition_line_ids" modifiers="{'readonly': [('state', 'in', ['cancel','receive'])]}">
                                     <list editable="bottom">
                                         <field name="from_job_card" column_invisible="1"/>
+                                        <field name="is_stock"/>
                                         <field name="requisition_type" groups="material_purchase_requisitions.group_purchase_requisition_user,purchase.group_purchase_user,material_purchase_requisitions.group_purchase_requisition_manager,material_purchase_requisitions.group_purchase_requisition_department"   column_invisible="context.get('from_job_card_origin', False)"/>
 <!--                                         invisible="from_job_card != False"-->
                                         <field name="part_type"/>
@@ -207,12 +209,15 @@
                 </search>
             </field>
         </record>
-        
+
+
+<!--        removed approved records visibility-->
         <record model="ir.actions.act_window" id="action_material_purchase_requisition">
             <field name="name">Purchase Requisitions</field>
             <field name="res_model">material.purchase.requisition</field>
             <!--<field name="view_type">form</field>-->
             <field name="view_mode">list,form</field>
+<!--            <field name="domain">[('state', '!=', 'approve')]</field>-->
         </record>
 
 
