@@ -874,7 +874,7 @@ class MaterialPurchaseRequisition(models.Model):
                 'note': rec.reason if 'reason' in rec._fields else '',
                 'employee_id': rec.employee_id.id if 'employee_id' in rec._fields else False,
                 'department_id': rec.department_id.id if 'department_id' in rec._fields else False,
-                'job_number': rec.job_number if 'job_number' in rec._fields else False,
+                'car_id': rec.car_id.id if 'car_id' in rec._fields else False,
                 'vehicle_name': rec.vehicle_name if 'vehicle_name' in rec._fields else False,
                 'vin_sn': rec.vin_sn if 'vin_sn' in rec._fields else False,
             }
