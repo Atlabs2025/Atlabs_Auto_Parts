@@ -15,6 +15,7 @@
     'views/sale_order.xml',
     'views/list_view.xml',
     # 'views/vehicle_details.xml',
+    'views/vehicle_details.xml',
 
 
 ],

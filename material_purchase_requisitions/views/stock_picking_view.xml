@@ -24,6 +24,21 @@
             </xpath>
             </field>
         </record>
-        
+
+
+        <menuitem id="stock.menu_stock_analysis_root" name="Stock Analysis" parent="stock.menu_stock_root" sequence="101" action="action_stock_analysis_wizard"/>
+<!--        action="action_stock_analysis_wizard"-->
+
+
+        <record id="action_stock_analysis_wizard" model="ir.actions.act_window">
+            <field name="name">Stock Analysis</field>
+            <field name="res_model">stock.analysis.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <!-- just pass uid to Python for processing -->
+        </record>
+
+
+
     </data>
 </odoo>

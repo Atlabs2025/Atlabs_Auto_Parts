@@ -177,6 +177,15 @@ class PurchaseOrder(models.Model):
         for rec in self:
             rec.state = 'to approve'
 
+            #  UPDATE PICKING FIELDS
+            if rec.picking_ids:
+                rec.picking_ids.write({
+                    'car_id': rec.car_id.id,
+                    'vehicle_name': rec.vehicle_name,
+                    'vin_sn': rec.vin_sn,
+                })
+            #END BLOCK
+
             # 🔹 Get Purchase Manager group
             manager_group = self.env.ref('purchase.group_purchase_manager', raise_if_not_found=False)
             if not manager_group or not manager_group.users:
@@ -253,8 +262,6 @@ Purchase Department"""
         return res
 
 
-
-    
 
 
 
