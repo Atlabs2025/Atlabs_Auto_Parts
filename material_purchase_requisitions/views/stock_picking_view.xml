@@ -22,6 +22,11 @@
                 <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='description_picking']" position="after">
                 <field name="available_qty" readonly="1"/>
             </xpath>
+                <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_uom']" position="after">
+                <field name="part_location"/>
+            </xpath>
+
+
             </field>
         </record>
 

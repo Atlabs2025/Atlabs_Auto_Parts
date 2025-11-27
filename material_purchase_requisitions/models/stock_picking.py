@@ -57,7 +57,7 @@ class StockMove(models.Model):
         compute="_compute_available_qty",
         store=False,
     )
-
+    part_location = fields.Char(string="Part Location")
     # commented because stock showing minus value
     #
     # @api.depends('product_id', 'location_id')

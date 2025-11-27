@@ -162,12 +162,6 @@ class MaterialPurchaseRequisitionLine(models.Model):
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
-    # @api.model
-    # def create(self, vals):
-    #     # If product created from purchase requisition, force service
-    #     if self.env.context.get('default_type') == 'service':
-    #         vals['type'] = 'service'
-    #     return super().create(vals)
 
     @api.model
     def create(self, vals):
