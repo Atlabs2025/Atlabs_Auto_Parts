@@ -840,10 +840,10 @@ class MaterialPurchaseRequisition(models.Model):
             rec.state = 'approve'
 
             # ====== FILTER LINES FOR PICKING ======
-            # Only stock items AND not purchase type
-            stock_lines = rec.requisition_line_ids.filtered(
-                lambda l: l.is_stock and l.requisition_type != 'purchase'
-            )
+            # stock_lines = rec.requisition_line_ids.filtered(
+            #     lambda l: l.is_stock and l.requisition_type != 'purchase'
+            # )
+            stock_lines = rec.requisition_line_ids.filtered(lambda l: l.is_stock)
 
             # If no lines need picking, skip picking creation
             if not stock_lines:
