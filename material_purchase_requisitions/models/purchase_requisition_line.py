@@ -173,6 +173,12 @@ class ProductProduct(models.Model):
 
         return super().create(vals)
 
+    def write(self, vals):
+        if self.env.context.get('default_set_non_inventory'):
+            category = self.env['product.category'].search([('name', '=', 'Non Inventory')], limit=1)
+            if category:
+                vals['categ_id'] = category.id
+        return super().write(vals)
 
 
 
