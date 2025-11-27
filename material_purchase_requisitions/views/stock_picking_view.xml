@@ -14,7 +14,7 @@
                      <field name="employee_id" invisible="1"/>
                      <field name="taken_by"/>
                     <field name="department_id"/>
-                    <field name="job_number"/>
+                    <field name="car_id"/>
                     <field name="vehicle_name"/>
                     <field name="vin_sn"/>
                  </xpath>

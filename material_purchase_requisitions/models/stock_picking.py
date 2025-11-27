@@ -32,7 +32,7 @@ class StockPicking(models.Model):
         copy=True,
     )
 
-    job_number = fields.Char(string="Car ID")
+    car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
     vehicle_name = fields.Char(string="Vehicle")
     vin_sn = fields.Char(string="VIN Number")
 

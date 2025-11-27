@@ -21,8 +21,8 @@ class MaterialPurchaseRequisitionLine(models.Model):
     product_id = fields.Many2one(
         'product.product',
         string='Product',
-        domain="[('type', '=', 'service')] if requisition_type == 'purchase' else[]")
-
+        domain="[('categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []",
+    )
 
     #     layout_category_id = fields.Many2one(
 #         'sale.layout_category',
@@ -80,6 +80,10 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
     image = fields.Image(string="Image")
     is_stock = fields.Boolean(string="Stock Available", default=False)
+
+
+
+
 
     def action_preview_image(self):
         return {
@@ -153,20 +157,28 @@ class MaterialPurchaseRequisitionLine(models.Model):
                     # raise UserError("Product with this part number not found.")
 
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-# added for seeing the from job card field true
-    @api.model
-    def default_get(self, fields):
-        res = super().default_get(fields)
-        if self.env.context.get('from_job_card_origin'):
-            res['from_job_card'] = True
-        return res
 
 
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
 
     # @api.model
     # def create(self, vals):
-    #     # Check if we are coming from job card context
-    #     if self.env.context.get('from_job_card_origin'):
-    #         vals['from_job_card'] = True
-    #     return super(MaterialPurchaseRequisitionLine, self).create(vals)
+    #     # If product created from purchase requisition, force service
+    #     if self.env.context.get('default_type') == 'service':
+    #         vals['type'] = 'service'
+    #     return super().create(vals)
+
+    @api.model
+    def create(self, vals):
+        # Check if flag is passed from MPR lines
+        if self.env.context.get('default_set_non_inventory'):
+            category = self.env['product.category'].search([('name', '=', 'Non Inventory')], limit=1)
+            if category:
+                vals['categ_id'] = category.id
+
+        return super().create(vals)
+
+
+
+
