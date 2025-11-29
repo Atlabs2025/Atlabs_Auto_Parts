@@ -11,6 +11,7 @@
                 <field name="car_id"/>
                 <field name="vehicle_name"/>
                 <field name="vin_sn"/>
+                <field name="custom_requisition_id"/>
 <!--                <field name="material_requisition_id"/>-->
             </xpath>
               <xpath expr="//field[@name='order_line']/list/field[@name='product_id']" position="before">
@@ -43,6 +44,7 @@
                 <field name="car_id"/>
                 <field name="vehicle_name"/>
                 <field name="vin_sn"/>
+
             </xpath>
 
         </field>
@@ -61,6 +63,8 @@
                 <field name="car_id"/>
                 <field name="vehicle_name"/>
                 <field name="vin_sn"/>
+
+
             </xpath>
 
         </field>

@@ -24,6 +24,7 @@
             </xpath>
                 <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_uom']" position="after">
                 <field name="part_location"/>
+
             </xpath>
 
 
@@ -43,7 +44,11 @@
             <!-- just pass uid to Python for processing -->
         </record>
 
-        <menuitem id="stock.menu_stock_analysis_root" name="Stock Analysis" parent="stock.menu_stock_root" sequence="101" action="action_stock_analysis_wizard"/>
+        <menuitem id="stock.menu_stock_analysis_root" name="Stock Analysis" parent="stock.menu_stock_root" sequence="101"/>
+
+        <menuitem id="stock.menu_stock_analysis_report" name="Stock Analysis Report" parent="stock.menu_stock_analysis_root" action="action_stock_analysis_wizard" sequence="1"/>
+
+
 
 
 

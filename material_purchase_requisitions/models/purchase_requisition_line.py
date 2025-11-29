@@ -79,11 +79,21 @@ class MaterialPurchaseRequisitionLine(models.Model):
         string='From Job Card')
 
     image = fields.Image(string="Image")
-    is_stock = fields.Boolean(string="Stock Available", default=False)
+    # is_stock = fields.Boolean(string="Stock Available", default=False)
+    is_stock = fields.Boolean(
+        string="Has Stock",
+        compute="_compute_is_stock",
+        store=False
+    )
+
+    picking_created = fields.Boolean(string="Picking Created", default=False)
 
 
 
-
+    @api.depends('stock_qty')
+    def _compute_is_stock(self):
+        for line in self:
+            line.is_stock = line.stock_qty > 0
 
     def action_preview_image(self):
         return {
