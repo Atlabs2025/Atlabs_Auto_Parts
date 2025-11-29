@@ -8,7 +8,7 @@ import urllib.parse
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
-    
+
     custom_requisition_id = fields.Many2one(
         'material.purchase.requisition',
         string='Requisitions',
@@ -183,7 +183,10 @@ class PurchaseOrder(models.Model):
                     'car_id': rec.car_id.id,
                     'vehicle_name': rec.vehicle_name,
                     'vin_sn': rec.vin_sn,
+                    'hide_in_requisition': True,
+                    # 'custom_requisition_id': rec.custom_requisition_id.id,
                 })
+
             #END BLOCK
 
             # 🔹 Get Purchase Manager group
@@ -263,12 +266,9 @@ Purchase Department"""
 
 
 
-
-
-
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
-    
+
     custom_requisition_line_id = fields.Many2one(
         'material.purchase.requisition.line',
         string='Requisitions Line',

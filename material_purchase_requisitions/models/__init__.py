@@ -7,5 +7,6 @@ from . import hr_department
 from . import stock_picking
 from . import purchase_order
 from . import material_requisition
+from . import stock_analysis_view
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
