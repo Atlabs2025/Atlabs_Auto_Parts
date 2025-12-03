@@ -19,6 +19,7 @@ class StockAnalysisView(models.Model):
     )  # ✔ Only this field needed
 
     picking_id = fields.Many2one("stock.picking", string="Picking")
+    available_qty = fields.Float("Available Qty")
 
 
 
@@ -34,7 +35,8 @@ class StockAnalysisView(models.Model):
                     sm.product_uom AS uom_id,
                     sm.part_location AS part_location,
                     sp.custom_requisition_id AS epr_id,
-                    sp.id AS picking_id
+                    sp.id AS picking_id,
+                    sm.available_qty AS available_qty
                 FROM stock_move sm
                 JOIN stock_picking sp ON sm.picking_id = sp.id
                 JOIN product_product pp ON sm.product_id = pp.id
@@ -42,6 +44,7 @@ class StockAnalysisView(models.Model):
                 JOIN product_category pc ON pt.categ_id = pc.id
                 WHERE sp.state = 'done'
                   AND pc.name = 'Non Inventory'
+                  AND sp.car_id IS NOT NULL
             );
         """)
 

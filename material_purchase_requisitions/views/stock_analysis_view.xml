@@ -18,7 +18,23 @@
     </field>
 </record>
 
-<record id="action_stock_analysis_view" model="ir.actions.act_window">
+
+    <record id="view_stock_analysis_search" model="ir.ui.view">
+        <field name="name">stock.analysis.view.search</field>
+        <field name="model">stock.analysis.view</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="car_id"/>
+
+                <filter name="filter_car"
+                        string="Group by Car"
+                        domain="[]"
+                        context="{'group_by':'car_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_stock_analysis_view" model="ir.actions.act_window">
     <field name="name">Stock Analysis View</field>
     <field name="res_model">stock.analysis.view</field>
     <field name="view_mode">list</field>
