@@ -89,7 +89,7 @@ class StockMove(models.Model):
     available_qty = fields.Float(
         string="Stock",
         compute="_compute_available_qty",
-        store=False,
+        store=True,
     )
     part_location = fields.Char(string="Part Location")
     # commented because stock showing minus value
