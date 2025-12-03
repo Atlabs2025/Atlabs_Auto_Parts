@@ -31,7 +31,7 @@
 
 
                         <field name="state" widget="statusbar" string="confirm"  
-                                        statusbar_visible="draft,rfq,dept_confirm,ir_approve,approve,purchase"/>
+                                        statusbar_visible="draft,partial,rfq,dept_confirm,ir_approve,approve,purchase"/>
                     </header>
                     <sheet>
                     <div class="oe_button_box" name="button_box">

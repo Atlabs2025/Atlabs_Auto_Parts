@@ -51,24 +51,42 @@ class StockPicking(models.Model):
                 rec.department_id = rec.employee_id.department_id.id
 
 
+    # def button_validate(self):
+    #     res = super(StockPicking, self).button_validate()
+    #
+    #     for picking in self:
+    #         # try to get linked purchase.order (recommended: use purchase_id)
+    #         po = picking.purchase_id or self.env['purchase.order'].search([('name', '=', picking.origin)], limit=1)
+    #
+    #         if po and po.custom_requisition_id:
+    #             req_id = po.custom_requisition_id.id
+    #
+    #
+    #             picking.sudo().write({'custom_requisition_id': req_id})
+    #
+    #             #  write onto moves (so stock.move.epr_id is filled)
+    #             picking.move_ids_without_package.sudo().write({'epr_id': req_id})
+    #
+    #             #  onto move lines (so stock.move.line.epr_id is filled)
+    #             picking.move_line_ids.sudo().write({'epr_id': req_id})
+    #
+    #     return res
+
     def button_validate(self):
         res = super(StockPicking, self).button_validate()
 
         for picking in self:
-            # try to get linked purchase.order (recommended: use purchase_id)
             po = picking.purchase_id or self.env['purchase.order'].search([('name', '=', picking.origin)], limit=1)
 
             if po and po.custom_requisition_id:
                 req_id = po.custom_requisition_id.id
 
-
                 picking.sudo().write({'custom_requisition_id': req_id})
-
-                #  write onto moves (so stock.move.epr_id is filled)
                 picking.move_ids_without_package.sudo().write({'epr_id': req_id})
-
-                #  onto move lines (so stock.move.line.epr_id is filled)
                 picking.move_line_ids.sudo().write({'epr_id': req_id})
+
+            # 🔥 FORCE RECALCULATE AVAILABLE QTY AFTER VALIDATION
+            picking.move_ids_without_package._compute_available_qty()
 
         return res
 
@@ -92,8 +110,8 @@ class StockMove(models.Model):
         store=True,
     )
     part_location = fields.Char(string="Part Location")
-    # commented because stock showing minus value
-    #
+
+
     # @api.depends('product_id', 'location_id')
     # def _compute_available_qty(self):
     #     for rec in self:
@@ -101,18 +119,19 @@ class StockMove(models.Model):
     #         if rec.product_id and rec.location_id:
     #             # get quantity available in that location
     #             qty = rec.product_id.with_context(location=rec.location_id.id).qty_available
-    #         rec.available_qty = qty
+    #
+    #         # ✅ ensure negative values display as 0
+    #         rec.available_qty = max(qty, 0.0)
 
-    @api.depends('product_id', 'location_id')
+# changed function on december3 because stock not comming
+    @api.depends('product_id')
     def _compute_available_qty(self):
         for rec in self:
-            qty = 0.0
-            if rec.product_id and rec.location_id:
-                # get quantity available in that location
-                qty = rec.product_id.with_context(location=rec.location_id.id).qty_available
-
-            # ✅ ensure negative values display as 0
-            rec.available_qty = max(qty, 0.0)
+            if not rec.product_id:
+                rec.available_qty = 0
+                return
+            # Get the product on-hand quantity AFTER picking validation
+            rec.available_qty = rec.product_id.qty_available
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
