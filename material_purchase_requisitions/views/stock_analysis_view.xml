@@ -13,6 +13,7 @@
             <field name="vendor_id"/>
             <field name="uom_id"/>
             <field name="part_location"/>
+            <field name="available_qty"/>
             <field name="epr_id" widget="many2one"/>
         </list>
     </field>
