@@ -21,7 +21,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     product_id = fields.Many2one(
         'product.product',
         string='Product',
-        domain="[('categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []",
+        domain="[('categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []",required=True,
     )
 
     #     layout_category_id = fields.Many2one(
@@ -45,7 +45,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
         string='Nature Of Cost',
-        copy=True,
+        copy=True,required=True
     )
     partner_id = fields.Many2many(
         'res.partner',
@@ -64,7 +64,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
         ('after_market', 'After Market'),
         ('genuine', 'Genuine'),
         ('used', 'Used'),
-    ], string='Part Type', default='')
+    ], string='Part Type', default='',required=True)
 
     part_no = fields.Char(string="Part Number")
     product_template_id = fields.Many2one('product.template', string="Part Number")
