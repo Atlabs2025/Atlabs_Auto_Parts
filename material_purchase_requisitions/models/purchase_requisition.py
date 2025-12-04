@@ -732,9 +732,7 @@ class MaterialPurchaseRequisition(models.Model):
             else:
                 rec.state = 'partial'
 
-            # -----------------------------------------------------
             # ✔ Create picking only for lines having is_stock = True
-            # -----------------------------------------------------
             stock_lines = lines.filtered(lambda l: l.is_stock and not l.picking_created)
 
             if not stock_lines:
@@ -755,6 +753,11 @@ class MaterialPurchaseRequisition(models.Model):
                 'company_id': rec.company_id.id,
                 'custom_requisition_id': rec.id,
                 'hide_in_requisition': False,
+
+                #Added vehicle details
+                'car_id': rec.car_id.id if rec.car_id else False,
+                'vin_sn': rec.vin_sn or False,
+                'vehicle_name': rec.vehicle_name or False,
             })
 
             for line in stock_lines:
@@ -767,6 +770,8 @@ class MaterialPurchaseRequisition(models.Model):
                     'location_dest_id': dest_location.id,
                     'picking_id': picking.id,
                     'company_id': rec.company_id.id,
+                    # newly added car_id for moves history view
+                    # 'car_id': rec.car_id.id if rec.car_id else False,
                 })
 
                 # Mark line as picked
@@ -786,11 +791,18 @@ class MaterialPurchaseRequisition(models.Model):
                             'location_id': move.location_id.id,
                             'location_dest_id': move.location_dest_id.id,
                             'company_id': move.company_id.id,
+                            # newly added car_id for moves history view
+                            'car_id': rec.car_id.id,
                         })
                     else:
                         move.move_line_ids.write({'quantity': move.product_uom_qty})
 
             picking.button_validate()
+
+            # ✔ Assign car_id to ALL move lines, even auto-generated ones.newly added car_id for moves history view
+            # ----------------------------------------------------------
+            for move in picking.move_ids_without_package:
+                move.move_line_ids.write({'car_id': rec.car_id.id})
 
         return True
 
