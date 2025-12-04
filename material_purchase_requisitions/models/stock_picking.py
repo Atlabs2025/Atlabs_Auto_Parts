@@ -112,6 +112,7 @@ class StockMove(models.Model):
     part_location = fields.Char(string="Part Location")
 
 
+
     # @api.depends('product_id', 'location_id')
     # def _compute_available_qty(self):
     #     for rec in self:
@@ -141,3 +142,4 @@ class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
 
     epr_id = fields.Many2one('material.purchase.requisition', string="Requisition")
+    car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
