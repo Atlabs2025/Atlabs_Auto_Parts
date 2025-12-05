@@ -60,6 +60,27 @@
         </record>
 
 
+
+
+<!--        search filter for move history-->
+        <record id="view_move_line_search_inherit_car" model="ir.ui.view">
+            <field name="name">stock.move.line.search.inherit.car</field>
+            <field name="model">stock.move.line</field>
+            <field name="inherit_id" ref="stock.stock_move_line_view_search"/>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="car_id"/>
+                    <filter name="filter_car"
+                            string="Group by Car"
+                            domain="[]"
+                            context="{'group_by':'car_id'}"/>
+                </search>
+            </field>
+        </record>
+
+
+
+
         <!--        action="action_stock_analysis_wizard"-->
 
 

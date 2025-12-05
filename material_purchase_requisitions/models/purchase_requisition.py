@@ -268,52 +268,6 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
-
-
-
-    # def action_open_rfq_form(self):
-    #     self.ensure_one()
-    #
-    #     rfq_line_vals = []
-    #     for line in self.requisition_line_ids:
-    #         # Add only NON-STOCK ITEMS (is_stock == False)
-    #         if line.is_stock:
-    #             continue
-    #
-    #         if not line.product_id.id:
-    #             continue
-    #
-    #         rfq_line_vals.append((0, 0, {
-    #             'product_id': line.product_id.id,
-    #             'product_qty': line.qty,
-    #             'price_unit': line.cost_price or 0.0,
-    #             'part_type': line.part_type or False,
-    #             'part_no': line.part_no or False,
-    #         }))
-    #
-    #     # If no non-stock items exist, block RFQ creation
-    #     if not rfq_line_vals:
-    #         raise UserError("All items are stock items. No RFQ needed.")
-    #
-    #     # Update state of material requisition
-    #     self.state = 'rfq'
-    #     self.rfq_created = True
-    #
-    #     return {
-    #         'type': 'ir.actions.act_window',
-    #         'res_model': 'rfq.request',
-    #         'view_mode': 'form',
-    #         'target': 'current',
-    #         'context': {
-    #             'default_line_ids': rfq_line_vals,
-    #             'default_material_requisition_id': self.id,
-    #             'default_car_id': self.car_id.id if self.car_id else False,
-    #             'default_vehicle_name': self.vehicle_name or '',
-    #             'default_vin_sn': self.vin_sn or '',
-    #             'default_department_id': self.department_id.id if self.department_id else False,
-    #         },
-    #     }
-
     # def action_open_rfq_form(self):
     #     self.ensure_one()
     #
@@ -524,8 +478,6 @@ class MaterialPurchaseRequisition(models.Model):
             employee_mail_template.send_mail(self.id)
             email_iruser_template.send_mail(self.id)
             rec.state = 'ir_approve'
-
-
 
 
 
