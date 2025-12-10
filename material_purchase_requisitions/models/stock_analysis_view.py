@@ -49,6 +49,7 @@ class StockAnalysisView(models.Model):
                 WHERE sp.state = 'done'
                   AND pc.name = 'Non Inventory'
                   AND sp.car_id IS NOT NULL
+                  AND sm.available_qty > 0    -- Filter zero qty
             );
         """)
 
