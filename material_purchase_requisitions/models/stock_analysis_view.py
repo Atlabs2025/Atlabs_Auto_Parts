@@ -6,6 +6,8 @@ class StockAnalysisView(models.Model):
     _auto = False
 
     car_id = fields.Many2one('vehicle.details', string="Car")
+    vehicle_name = fields.Char(string="Vehicle")
+    vin_sn = fields.Char(string="VIN/SN")
     product_id = fields.Many2one('product.product', string="Product")
     # qty = fields.Float("Qty")
     vendor_id = fields.Many2one('res.partner', string="Vendor")
@@ -29,14 +31,16 @@ class StockAnalysisView(models.Model):
             CREATE OR REPLACE VIEW stock_analysis_view AS (
                 SELECT
                     sm.id AS id,
-                    sp.car_id AS car_id,
+                    sp.car_id AS car_id,              
                     sm.product_id AS product_id,
                     sp.partner_id AS vendor_id,
                     sm.product_uom AS uom_id,
                     sm.part_location AS part_location,
                     sp.custom_requisition_id AS epr_id,
                     sp.id AS picking_id,
-                    sm.available_qty AS available_qty
+                    sm.available_qty AS available_qty,
+                    sp.vehicle_name AS vehicle_name,  
+                    sp.vin_sn AS vin_sn
                 FROM stock_move sm
                 JOIN stock_picking sp ON sm.picking_id = sp.id
                 JOIN product_product pp ON sm.product_id = pp.id
