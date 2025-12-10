@@ -33,7 +33,7 @@
                         <field name="state" widget="statusbar" string="confirm"  
                                         statusbar_visible="draft,partial,rfq,dept_confirm,ir_approve,approve,purchase"/>
                     </header>
-<!--                    <field name="is_locked" invisible="1"/>-->
+                    <field name="is_locked" invisible="1"/>
 <!--                <sheet modifiers="{'readonly': [('is_locked', '=', True)]}">-->
                     <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -53,31 +53,34 @@
                     </div>
                         <group>
                                 <group>
-                                    <field name="employee_id" modifiers="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="employee_id" readonly="is_locked == True"/>
 <!--                                     <field name="job_number"/>-->
-                                     <field name="car_id"/>
-                                    <field name="department_id" modifiers="{'readonly': [('state', '!=', 'draft')]}"/>
-                                    <field name="company_id" groups="base.group_multi_company" modifiers="{'readonly': [('state', '!=', 'draft')]}"/>
-                                    <field name="requisiton_responsible_id" modifiers="{'readonly': [('state', '!=', 'draft')]}"/>
+                                     <field name="car_id" readonly="is_locked == True"/>
+                                    <field name="department_id" readonly="is_locked == True"/>
+                                    <field name="company_id" groups="base.group_multi_company" readonly="is_locked == True"/>
+                                    <field name="requisiton_responsible_id" readonly="is_locked == True"/>
                                     <field name="taken_by"/>
 
                                 </group>
                                 <group>
-                                    <field name="request_date" modifiers="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="request_date" readonly="is_locked == True"/>
 <!--                                    <field name="receive_date" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>-->
-                                    <field name="receive_date"/>
+                                    <field name="receive_date" readonly="is_locked == True"/>
 <!--                                    <field name="date_end" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>-->
-                                    <field name="date_end"/>
+                                    <field name="date_end" readonly="is_locked == True"/>
                                     <field name="vehicle_id" invisible="1"/>
 <!--                                    <field name="car_id"/>-->
-                                    <field name="vehicle_name"/>
-                                    <field name="vin_sn"/>
-                                    <field name="requisition_deadline_type"/>
+                                    <field name="vehicle_name" readonly="is_locked == True"/>
+                                    <field name="vin_sn" readonly="is_locked == True"/>
+                                    <field name="requisition_deadline_type" readonly="is_locked == True"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>
                                 </group>
                              </group>
                         <notebook>
                             <page string="Requisitions Lines">
+
+<!--                                modifiers="{'readonly': [('state', 'in', ['cancel','receive'])]}"-->
+
                                 <field name="requisition_line_ids" modifiers="{'readonly': [('state', 'in', ['cancel','receive'])]}">
                                     <list editable="bottom">
                                         <field name="from_job_card" column_invisible="1"/>
@@ -169,6 +172,9 @@
                     <field name="date_end"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="state"/>
+                    <field name="po_id" widget="many2one"/>
+
+
                 </list>
             </field>
         </record>

@@ -238,27 +238,32 @@ class MaterialPurchaseRequisition(models.Model):
         store=False
     )
 
-    # is_locked = fields.Boolean(compute="_compute_is_locked")
-    #
-    # @api.depends('state', 'requisition_line_ids.requisition_type')
-    # def _compute_is_locked(self):
-    #     for rec in self:
-    #         line_types = rec.requisition_line_ids.mapped('requisition_type')
-    #
-    #         # both internal + approved → lock
-    #         if rec.state == 'approve' and all(t == 'internal' for t in line_types):
-    #             rec.is_locked = True
-    #
-    #         # both purchase → lock after rfq
-    #         elif rec.state == 'rfq' and all(t == 'purchase' for t in line_types):
-    #             rec.is_locked = True
-    #
-    #         # mixed → lock after rfq
-    #         elif rec.state == 'rfq' and 'internal' in line_types and 'purchase' in line_types:
-    #             rec.is_locked = True
-    #
-    #         else:
-    #             rec.is_locked = False
+    po_id = fields.Many2one('purchase.order',string="PO Number",readonly=True)
+
+    is_locked = fields.Boolean(compute="_compute_is_locked")
+    #read only  function
+    @api.depends('state', 'requisition_line_ids.requisition_type')
+    def _compute_is_locked(self):
+        for rec in self:
+            line_types = rec.requisition_line_ids.mapped('requisition_type')
+
+            # both internal + approved → lock
+            if rec.state == 'approve' and all(t == 'internal' for t in line_types):
+                rec.is_locked = True
+
+            # both purchase → lock after rfq
+            elif rec.state == 'rfq' and all(t == 'purchase' for t in line_types):
+                rec.is_locked = True
+
+            # mixed → lock after rfq
+            elif rec.state == 'rfq' and 'internal' in line_types and 'purchase' in line_types:
+                rec.is_locked = True
+
+            elif rec.state == 'purchase':
+                rec.is_locked = True
+
+            else:
+                rec.is_locked = False
 
     @api.depends('requisition_line_ids.is_stock')
     def _compute_has_non_stock_line(self):
