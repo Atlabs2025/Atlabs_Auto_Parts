@@ -61,6 +61,7 @@
                                     <field name="requisiton_responsible_id" readonly="is_locked == True"/>
                                     <field name="taken_by"/>
 
+
                                 </group>
                                 <group>
                                     <field name="request_date" readonly="is_locked == True"/>
@@ -96,11 +97,8 @@
                                         <field name="product_id" domain="[('categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []" context="{'default_set_non_inventory': requisition_type == 'purchase'}"/>
 
 
-
-
-
-
                                         <field name="description"/>
+
                                         <field name="qty"/>
                                         <field name="stock_qty" column_invisible="context.get('from_job_card_origin', False)"/>
                                         <field name="uom"/>
@@ -173,6 +171,9 @@
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="state"/>
                     <field name="po_id" widget="many2one"/>
+
+
+
 
 
                 </list>

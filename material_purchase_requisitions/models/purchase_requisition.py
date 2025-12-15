@@ -29,6 +29,7 @@ class MaterialPurchaseRequisition(models.Model):
     taken_by = fields.Char(string="Taken By")
 
 
+
     @api.onchange('car_id')
     def _onchange_car_id(self):
         if self.car_id:
@@ -241,6 +242,9 @@ class MaterialPurchaseRequisition(models.Model):
     po_id = fields.Many2one('purchase.order',string="PO Number",readonly=True)
 
     is_locked = fields.Boolean(compute="_compute_is_locked")
+
+
+
     #read only  function
     @api.depends('state', 'requisition_line_ids.requisition_type')
     def _compute_is_locked(self):

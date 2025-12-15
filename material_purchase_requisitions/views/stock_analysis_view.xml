@@ -29,6 +29,9 @@
             <search>
                 <field name="car_id"/>
 
+                <field name="vin_sn"/>
+                <field name="vehicle_name"/>
+
                 <filter name="filter_car"
                         string="Group by Car"
                         domain="[]"

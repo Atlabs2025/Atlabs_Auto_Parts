@@ -139,6 +139,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 rec.cost_price = False
                 rec.is_stock = False
 
+
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
         if self.requisition_type == 'purchase':
