@@ -97,7 +97,7 @@
                                         <field name="product_id" domain="[('categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []" context="{'default_set_non_inventory': requisition_type == 'purchase'}"/>
 
 
-                                        <field name="description"/>
+                                        <field name="description" readonly="requisition_type=='internal'"/>
 
                                         <field name="qty"/>
                                         <field name="stock_qty" column_invisible="context.get('from_job_card_origin', False)"/>
