@@ -30,7 +30,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
 #     )
     description = fields.Char(
         string='Description',
-        required=True,
+
     )
     qty = fields.Float(
         string='Quantity',
@@ -110,22 +110,39 @@ class MaterialPurchaseRequisitionLine(models.Model):
     def _compute_stock_qty(self):
         for rec in self:
             rec.stock_qty = rec.product_id.qty_available if rec.product_id else 0.0
-# commented default code
-#     @api.onchange('product_id')
-#     def onchange_product_id(self):
-#         for rec in self:
-#             # rec.description = rec.product_id.name
-#             rec.description = rec.product_id.display_name
-#             rec.uom = rec.product_id.uom_id.id
-#             rec.part_no =rec.product_id.default_code
-#             # rec.sale_price =rec.product_id.lst_price
-#             rec.cost_price =rec.product_id.standard_price
 
+
+
+
+    # @api.onchange('product_id')
+    # def onchange_product_id(self):
+    #     for rec in self:
+    #         if rec.product_id:
+    #             # rec.description = rec.product_id.display_name
+    #             rec.uom = rec.product_id.uom_id.id
+    #             rec.part_no = rec.product_id.default_code
+    #             rec.cost_price = rec.product_id.standard_price
+    #
+    #             # ✔ Auto tick is_stock based on available quantity
+    #             rec.is_stock = rec.product_id.qty_available > 0
+    #         else:
+    #             rec.description = False
+    #             rec.uom = False
+    #             rec.part_no = False
+    #             rec.cost_price = False
+    #             rec.is_stock = False
+# new function added on dec 16 for description changes
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
             if rec.product_id:
-                rec.description = rec.product_id.display_name
+
+                # ✅ CONDITION ADDED HERE
+                if rec.requisition_type == 'purchase':
+                    rec.description = rec.product_id.display_name
+                else:
+                    rec.description = False  # internal → no auto-fill
+
                 rec.uom = rec.product_id.uom_id.id
                 rec.part_no = rec.product_id.default_code
                 rec.cost_price = rec.product_id.standard_price
@@ -138,7 +155,6 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 rec.part_no = False
                 rec.cost_price = False
                 rec.is_stock = False
-
 
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
@@ -154,7 +170,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 product = self.env['product.product'].search([('default_code', '=', rec.part_no)], limit=1)
                 if product:
                     rec.product_id = product.id
-                    rec.description = product.display_name
+                    # rec.description = product.display_name
                     rec.uom = product.uom_id.id
                     rec.cost_price = product.standard_price
                     rec.sale_price = product.lst_price
