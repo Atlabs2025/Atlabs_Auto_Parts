@@ -229,6 +229,7 @@ class RFQRequest(models.Model):
 
 
 
+
     def action_view_rfq(self):
         return {
             'name': 'RFQ',
@@ -280,12 +281,25 @@ class PurchaseOrder(models.Model):
         readonly=True,
     )
 
+    # def button_approve(self, force=False):
+    #     res = super(PurchaseOrder, self).button_approve(force)
+    #
+    #     for po in self:
+    #         if po.material_requisition_id:
+    #             po.material_requisition_id.state = 'purchase'
+    #
+    #     return res
+
     def button_approve(self, force=False):
         res = super(PurchaseOrder, self).button_approve(force)
 
         for po in self:
             if po.material_requisition_id:
+                # Update requisition state
                 po.material_requisition_id.state = 'purchase'
+
+                # ⭐ Update PO number field
+                po.material_requisition_id.po_id = po.id
 
         return res
 
