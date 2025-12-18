@@ -75,7 +75,7 @@
                                     <field name="vin_sn" readonly="is_locked == True"/>
                                     <field name="requisition_deadline_type" readonly="is_locked == True"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>
-                                    <field name="rfq_id" invisible="1"/>
+
                                 </group>
                              </group>
                         <notebook>
@@ -172,7 +172,7 @@
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="state"/>
                     <field name="po_id" widget="many2one"/>
-                    <field name="rfq_id" widget="many2one"/>
+
 
 
 

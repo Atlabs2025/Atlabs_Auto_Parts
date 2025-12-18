@@ -243,7 +243,7 @@ class MaterialPurchaseRequisition(models.Model):
 
     is_locked = fields.Boolean(compute="_compute_is_locked")
 
-    rfq_id = fields.Many2one('rfq.request', string="RFQ Number", readonly=True)
+
 
 
 

@@ -44,30 +44,30 @@ class RFQRequest(models.Model):
         string='Department',store=True,readonly=True,
     )
 
-    # @api.model
-    # def create(self, vals):
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
-    #     return super().create(vals)
-
-# added this function on dec 18 for displaying rfq number
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
+        return super().create(vals)
 
-        rfq = super().create(vals)
-
-        # 🔥 LINK ONLY AFTER RFQ EXISTS
-        requisition = rfq.material_requisition_id
-        if requisition:
-            requisition.write({
-                'rfq_id': rfq.id,  # ✅ MUST be rfq.id (int)
-                'state': 'rfq',
-                'rfq_created': True,
-            })
-
-        return rfq
+# added this function on dec 18 for displaying rfq number
+#     @api.model
+#     def create(self, vals):
+#         if vals.get('name', 'New') == 'New':
+#             vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
+#
+#         rfq = super().create(vals)
+#
+#         # 🔥 LINK ONLY AFTER RFQ EXISTS
+#         requisition = rfq.material_requisition_id
+#         if requisition:
+#             requisition.write({
+#                 'rfq_id': rfq.id,  # ✅ MUST be rfq.id (int)
+#                 'state': 'rfq',
+#                 'rfq_created': True,
+#             })
+#
+#         return rfq
 
     # problem of comfirming solved
 
