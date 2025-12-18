@@ -243,7 +243,11 @@ class MaterialPurchaseRequisition(models.Model):
 
     is_locked = fields.Boolean(compute="_compute_is_locked")
 
-
+    rfq_number = fields.Char(
+        string="RFQ Number",
+        readonly=True,
+        copy=False
+    )
 
 
 
@@ -301,7 +305,6 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
-
     def action_open_rfq_form(self):
         self.ensure_one()
 
@@ -333,7 +336,7 @@ class MaterialPurchaseRequisition(models.Model):
         if not rfq_line_vals:
             raise UserError("All items are stock items or already picked. No RFQ needed.")
 
-        self.state = 'rfq'
+        # self.state = 'rfq'
         self.rfq_created = True
 
         return {

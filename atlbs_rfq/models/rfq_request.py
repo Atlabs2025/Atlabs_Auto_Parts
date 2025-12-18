@@ -51,35 +51,134 @@ class RFQRequest(models.Model):
         return super().create(vals)
 
 # added this function on dec 18 for displaying rfq number
-#     @api.model
-#     def create(self, vals):
-#         if vals.get('name', 'New') == 'New':
-#             vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
-#
-#         rfq = super().create(vals)
-#
-#         # 🔥 LINK ONLY AFTER RFQ EXISTS
-#         requisition = rfq.material_requisition_id
-#         if requisition:
-#             requisition.write({
-#                 'rfq_id': rfq.id,  # ✅ MUST be rfq.id (int)
-#                 'state': 'rfq',
-#                 'rfq_created': True,
-#             })
-#
-#         return rfq
-
-    # problem of comfirming solved
 
 
 
 
+
+    # def action_confirm(self):
+    #     for rec in self:
+    #         if not rec.line_ids:
+    #             raise UserError("Please add at least one product line.")
+    #
+    #         # Get picking type
+    #         picking_type = self.env['stock.picking.type'].search([
+    #             ('code', '=', 'incoming'),
+    #             ('warehouse_id.company_id', '=', self.env.company.id)
+    #         ], limit=1)
+    #
+    #         if not picking_type:
+    #             picking_type = self.env['stock.picking.type'].search([
+    #                 ('code', '=', 'internal'),
+    #                 ('warehouse_id.company_id', '=', self.env.company.id)
+    #             ], limit=1)
+    #
+    #         if not picking_type:
+    #             raise UserError("No picking type configured for this company.")
+    #
+    #         # ---------------------------------------------------------------
+    #         # 1. GROUP LINES BY SUPPLIER (inside each line)
+    #         # ---------------------------------------------------------------
+    #         line_supplier_groups = {}
+    #         for line in rec.line_ids:
+    #             if line.supplier_id:
+    #                 line_supplier_groups.setdefault(line.supplier_id.id, []).append(line)
+    #
+    #         created_suppliers = set()
+    #
+    #         # ---------------------------------------------------------------
+    #         # 2. CREATE PURCHASE ORDER FOR LINE-SUPPLIER ITEMS
+    #         # ---------------------------------------------------------------
+    #         for supplier_id, lines in line_supplier_groups.items():
+    #
+    #             po_line_vals = []
+    #             for line in lines:
+    #                 po_line_vals.append((0, 0, {
+    #                     'part_type': line.part_type,
+    #                     'part_no': line.part_no,
+    #                     'product_id': line.product_id.id,
+    #                     'name': line.product_id.display_name,
+    #                     'product_qty': line.product_qty,
+    #                     'price_unit': 0.0,
+    #                     'date_planned': fields.Date.today(),
+    #                 }))
+    #
+    #             po_vals = {
+    #                 'partner_id': supplier_id,
+    #                 'rfq_request_id': rec.id,
+    #                 'car_id': rec.car_id.id if rec.car_id else False,
+    #                 'vehicle_name': rec.vehicle_name or False,
+    #                 'vin_sn': rec.vin_sn or False,
+    #                 'custom_requisition_id': rec.material_requisition_id.id,
+    #                 'picking_type_id': picking_type.id,
+    #                 'order_line': po_line_vals,
+    #             }
+    #
+    #             self.env['purchase.order'].create(po_vals)
+    #             created_suppliers.add(supplier_id)
+    #
+    #         # ---------------------------------------------------------------
+    #         # 3. CREATE PO FOR SUPPLIERS SELECTED IN supplier_ids
+    #         #    Add only lines WITHOUT supplier_id
+    #         # ---------------------------------------------------------------
+    #         for supplier in rec.supplier_ids:
+    #
+    #             # Skip if already created from step 2
+    #             if supplier.id in created_suppliers:
+    #                 continue
+    #
+    #             po_line_vals = []
+    #
+    #             for line in rec.line_ids:
+    #
+    #                 # ❌ Skip items that belong to other suppliers
+    #                 if line.supplier_id and line.supplier_id.id != supplier.id:
+    #                     continue
+    #
+    #                 # ✔ Add lines WITHOUT supplier
+    #                 if not line.supplier_id:
+    #                     po_line_vals.append((0, 0, {
+    #                         'part_type': line.part_type,
+    #                         'part_no': line.part_no,
+    #                         'product_id': line.product_id.id,
+    #                         'name': line.product_id.display_name,
+    #                         'product_qty': line.product_qty,
+    #                         'price_unit': 0.0,
+    #                         'date_planned': fields.Date.today(),
+    #                     }))
+    #
+    #             # If this supplier has no lines → skip creation
+    #             if not po_line_vals:
+    #                 continue
+    #
+    #             po_vals = {
+    #                 'partner_id': supplier.id,
+    #                 'rfq_request_id': rec.id,
+    #                 'car_id': rec.car_id.id if rec.car_id else False,
+    #                 'vehicle_name': rec.vehicle_name or False,
+    #                 'vin_sn': rec.vin_sn or False,
+    #                 'custom_requisition_id': rec.material_requisition_id.id,
+    #                 'picking_type_id': picking_type.id,
+    #                 'order_line': po_line_vals,
+    #             }
+    #
+    #             self.env['purchase.order'].create(po_vals)
+    #
+    #         # ---------------------------------------------------------------
+    #         # UPDATE STATE
+    #         # ---------------------------------------------------------------
+    #         rec.state = 'confirmed'
+
+
+# changed this function on Dec 18 to display rfq number
     def action_confirm(self):
         for rec in self:
             if not rec.line_ids:
                 raise UserError("Please add at least one product line.")
 
-            # Get picking type
+            # ---------------------------------------------------------------
+            # GET PICKING TYPE
+            # ---------------------------------------------------------------
             picking_type = self.env['stock.picking.type'].search([
                 ('code', '=', 'incoming'),
                 ('warehouse_id.company_id', '=', self.env.company.id)
@@ -95,7 +194,7 @@ class RFQRequest(models.Model):
                 raise UserError("No picking type configured for this company.")
 
             # ---------------------------------------------------------------
-            # 1. GROUP LINES BY SUPPLIER (inside each line)
+            # 1. GROUP LINES BY SUPPLIER (line.supplier_id)
             # ---------------------------------------------------------------
             line_supplier_groups = {}
             for line in rec.line_ids:
@@ -105,7 +204,7 @@ class RFQRequest(models.Model):
             created_suppliers = set()
 
             # ---------------------------------------------------------------
-            # 2. CREATE PURCHASE ORDER FOR LINE-SUPPLIER ITEMS
+            # 2. CREATE PO FOR LINES HAVING SUPPLIER
             # ---------------------------------------------------------------
             for supplier_id, lines in line_supplier_groups.items():
 
@@ -127,7 +226,7 @@ class RFQRequest(models.Model):
                     'car_id': rec.car_id.id if rec.car_id else False,
                     'vehicle_name': rec.vehicle_name or False,
                     'vin_sn': rec.vin_sn or False,
-                    'custom_requisition_id': rec.material_requisition_id.id,
+                    'custom_requisition_id': rec.material_requisition_id.id if rec.material_requisition_id else False,
                     'picking_type_id': picking_type.id,
                     'order_line': po_line_vals,
                 }
@@ -136,24 +235,19 @@ class RFQRequest(models.Model):
                 created_suppliers.add(supplier_id)
 
             # ---------------------------------------------------------------
-            # 3. CREATE PO FOR SUPPLIERS SELECTED IN supplier_ids
-            #    Add only lines WITHOUT supplier_id
+            # 3. CREATE PO FOR supplier_ids (LINES WITHOUT supplier_id)
             # ---------------------------------------------------------------
             for supplier in rec.supplier_ids:
 
-                # Skip if already created from step 2
                 if supplier.id in created_suppliers:
                     continue
 
                 po_line_vals = []
-
                 for line in rec.line_ids:
 
-                    # ❌ Skip items that belong to other suppliers
                     if line.supplier_id and line.supplier_id.id != supplier.id:
                         continue
 
-                    # ✔ Add lines WITHOUT supplier
                     if not line.supplier_id:
                         po_line_vals.append((0, 0, {
                             'part_type': line.part_type,
@@ -165,7 +259,6 @@ class RFQRequest(models.Model):
                             'date_planned': fields.Date.today(),
                         }))
 
-                # If this supplier has no lines → skip creation
                 if not po_line_vals:
                     continue
 
@@ -175,7 +268,7 @@ class RFQRequest(models.Model):
                     'car_id': rec.car_id.id if rec.car_id else False,
                     'vehicle_name': rec.vehicle_name or False,
                     'vin_sn': rec.vin_sn or False,
-                    'custom_requisition_id': rec.material_requisition_id.id,
+                    'custom_requisition_id': rec.material_requisition_id.id if rec.material_requisition_id else False,
                     'picking_type_id': picking_type.id,
                     'order_line': po_line_vals,
                 }
@@ -183,9 +276,19 @@ class RFQRequest(models.Model):
                 self.env['purchase.order'].create(po_vals)
 
             # ---------------------------------------------------------------
-            # UPDATE STATE
+            # UPDATE RFQ STATE
             # ---------------------------------------------------------------
             rec.state = 'confirmed'
+
+            # ---------------------------------------------------------------
+            # UPDATE MATERIAL REQUISITION (🔥 IMPORTANT PART)
+            # ---------------------------------------------------------------
+            if rec.material_requisition_id:
+                rec.material_requisition_id.write({
+                    'state': 'rfq',  # use your actual state value
+                    'rfq_number': rec.name,  # RFQ number link
+                })
+
 
     def _compute_rfq_count(self):
         for rec in self:
