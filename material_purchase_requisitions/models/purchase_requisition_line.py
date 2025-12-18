@@ -132,6 +132,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     #             rec.cost_price = False
     #             rec.is_stock = False
 # new function added on dec 16 for description changes
+
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:

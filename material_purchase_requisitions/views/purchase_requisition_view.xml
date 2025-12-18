@@ -171,6 +171,7 @@
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="state"/>
                     <field name="po_id" widget="many2one"/>
+                    <field name="rfq_id" widget="many2one"/>
 
 
 
