@@ -44,69 +44,35 @@ class RFQRequest(models.Model):
         string='Department',store=True,readonly=True,
     )
 
+    # @api.model
+    # def create(self, vals):
+    #     if vals.get('name', 'New') == 'New':
+    #         vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
+    #     return super().create(vals)
+
+# added this function on dec 18 for displaying rfq number
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('rfq.request') or 'New'
-        return super().create(vals)
 
+        rfq = super().create(vals)
 
+        # 🔥 LINK ONLY AFTER RFQ EXISTS
+        requisition = rfq.material_requisition_id
+        if requisition:
+            requisition.write({
+                'rfq_id': rfq.id,  # ✅ MUST be rfq.id (int)
+                'state': 'rfq',
+                'rfq_created': True,
+            })
+
+        return rfq
 
     # problem of comfirming solved
 
 
 
-    # def action_confirm(self):
-    #     for rec in self:
-    #         if not rec.supplier_ids:
-    #             raise UserError("Please select at least one supplier.")
-    #         if not rec.line_ids:
-    #             raise UserError("Please add at least one product line.")
-    #
-    #         picking_type = self.env['stock.picking.type'].search([
-    #             ('code', '=', 'incoming'),
-    #             ('warehouse_id.company_id', '=', self.env.company.id)
-    #         ], limit=1)
-    #
-    #         if not picking_type:
-    #             picking_type = self.env['stock.picking.type'].search([
-    #                 ('code', '=', 'internal'),
-    #                 ('warehouse_id.company_id', '=', self.env.company.id)
-    #             ], limit=1)
-    #
-    #         if not picking_type:
-    #             raise UserError(
-    #                 "No picking type found for this company. Please configure it in Inventory > Settings."
-    #             )
-    #
-    #         for supplier in rec.supplier_ids:
-    #             po_vals = {
-    #                 'partner_id': supplier.id,
-    #                 'rfq_request_id': rec.id,
-    #                 'car_id': rec.car_id.id if rec.car_id else False,
-    #                 'vehicle_name': rec.vehicle_name if rec.vehicle_name else False,
-    #                 'vin_sn': rec.vin_sn or False,
-    #                 'picking_type_id': picking_type.id,
-    #                 # 'material_requisition_id': rec.material_requisition_id.id,
-    #                 'order_line': [],
-    #             }
-    #
-    #             order_lines = []
-    #             for line in rec.line_ids:
-    #                 order_lines.append((0, 0, {
-    #                     'part_type': line.part_type,
-    #                     'part_no': line.part_no,
-    #                     'product_id': line.product_id.id,
-    #                     'name': line.product_id.display_name,
-    #                     'product_qty': line.product_qty,
-    #                     'price_unit': 0.0,
-    #                     'date_planned': fields.Date.today(),
-    #                 }))
-    #             po_vals['order_line'] = order_lines
-    #
-    #             self.env['purchase.order'].create(po_vals)
-    #
-    #         rec.state = 'confirmed'
 
     def action_confirm(self):
         for rec in self:
