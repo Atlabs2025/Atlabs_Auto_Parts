@@ -157,12 +157,23 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 rec.cost_price = False
                 rec.is_stock = False
 
+    # @api.onchange('requisition_type')
+    # def _onchange_requisition_type(self):
+    #     if self.requisition_type == 'purchase':
+    #         self.is_stock = False
+
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
-        if self.requisition_type == 'purchase':
-            self.is_stock = False
-
-
+        for rec in self:
+            # 🔥 Always clear product & related fields when type changes
+            rec.product_id = False
+            rec.description = False
+            rec.uom = False
+            rec.part_no = False
+            rec.cost_price = 0.0
+            rec.sale_price = 0.0
+            rec.stock_qty = 0.0
+            rec.is_stock = False
 
     @api.onchange('part_no')
     def _onchange_part_no(self):
