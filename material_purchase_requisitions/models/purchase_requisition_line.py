@@ -57,7 +57,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
                     ('purchase','Purchase Order'),
         ],
         string='Requisition Action',
-        default='internal',
+        default='purchase',
         required=True,
     )
     part_type = fields.Selection([
