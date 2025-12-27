@@ -3,6 +3,9 @@
 from odoo import models, fields, api
 import odoo.addons.decimal_precision as dp
 
+from odoo.exceptions import ValidationError
+
+
 class MaterialPurchaseRequisitionLine(models.Model):
     _name = "material.purchase.requisition.line"
     _description = 'Material Purchase Requisition Lines'
@@ -88,7 +91,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
     picking_created = fields.Boolean(string="Picking Created", default=False)
 
-
+    lot_id = fields.Many2one('stock.lot',string='Lot / Car ID',domain="[('product_id', '=', product_id)]",)
 
     @api.depends('stock_qty')
     def _compute_is_stock(self):
@@ -106,19 +109,35 @@ class MaterialPurchaseRequisitionLine(models.Model):
             'views': [(self.env.ref('material_purchase_requisitions.image_preview_form').id, 'form')],
         }
 
-    @api.depends('product_id')
+    # @api.depends('product_id')
+    # def _compute_stock_qty(self):
+    #     for rec in self:
+    #         rec.stock_qty = rec.product_id.qty_available if rec.product_id else 0.0
+
+    @api.depends('product_id', 'lot_id', 'requisition_type')
     def _compute_stock_qty(self):
         for rec in self:
-            rec.stock_qty = rec.product_id.qty_available if rec.product_id else 0.0
+            if rec.requisition_type == 'purchase' and rec.lot_id:
+                rec.stock_qty = rec.lot_id.product_qty
+            elif rec.product_id:
+                rec.stock_qty = rec.product_id.qty_available
+            else:
+                rec.stock_qty = 0.0
 
 
-
+# new function added on dec 16 for description changes
 
     # @api.onchange('product_id')
     # def onchange_product_id(self):
     #     for rec in self:
     #         if rec.product_id:
-    #             # rec.description = rec.product_id.display_name
+    #
+    #             # ✅ CONDITION ADDED HERE
+    #             if rec.requisition_type == 'purchase':
+    #                 rec.description = rec.product_id.display_name
+    #             else:
+    #                 rec.description = False  # internal → no auto-fill
+    #
     #             rec.uom = rec.product_id.uom_id.id
     #             rec.part_no = rec.product_id.default_code
     #             rec.cost_price = rec.product_id.standard_price
@@ -131,24 +150,21 @@ class MaterialPurchaseRequisitionLine(models.Model):
     #             rec.part_no = False
     #             rec.cost_price = False
     #             rec.is_stock = False
-# new function added on dec 16 for description changes
 
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
-            if rec.product_id:
+            rec.lot_id = False  # 🔥 IMPORTANT
 
-                # ✅ CONDITION ADDED HERE
+            if rec.product_id:
                 if rec.requisition_type == 'purchase':
                     rec.description = rec.product_id.display_name
                 else:
-                    rec.description = False  # internal → no auto-fill
+                    rec.description = False
 
                 rec.uom = rec.product_id.uom_id.id
                 rec.part_no = rec.product_id.default_code
                 rec.cost_price = rec.product_id.standard_price
-
-                # ✔ Auto tick is_stock based on available quantity
                 rec.is_stock = rec.product_id.qty_available > 0
             else:
                 rec.description = False
@@ -162,10 +178,26 @@ class MaterialPurchaseRequisitionLine(models.Model):
     #     if self.requisition_type == 'purchase':
     #         self.is_stock = False
 
+    # @api.onchange('requisition_type')
+    # def _onchange_requisition_type(self):
+    #     for rec in self:
+    #         # 🔥 Always clear product & related fields when type changes
+    #         rec.product_id = False
+    #         rec.description = False
+    #         rec.uom = False
+    #         rec.part_no = False
+    #         rec.cost_price = 0.0
+    #         rec.sale_price = 0.0
+    #         rec.stock_qty = 0.0
+    #         rec.is_stock = False
+
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
         for rec in self:
-            # 🔥 Always clear product & related fields when type changes
+            if rec.requisition_type == 'internal':
+                # 🔥 VERY IMPORTANT
+                rec.lot_id = False
+
             rec.product_id = False
             rec.description = False
             rec.uom = False
@@ -196,6 +228,37 @@ class MaterialPurchaseRequisitionLine(models.Model):
                     # raise UserError("Product with this part number not found.")
 
 
+
+
+    @api.constrains('requisition_type', 'lot_id')
+    def _check_lot_required_for_purchase(self):
+        for rec in self:
+            if rec.requisition_type == 'purchase' and not rec.lot_id:
+                raise ValidationError("Lot / Car ID is mandatory for Purchase requisition.")
+
+    # @api.constrains('qty', 'lot_id', 'requisition_type')
+    # def _check_lot_stock_qty(self):
+    #     for rec in self:
+    #         if rec.requisition_type == 'purchase' and rec.lot_id:
+    #             if rec.qty > rec.lot_id.product_qty:
+    #                 raise ValidationError(
+    #                     "Requested quantity exceeds available stock for this Lot / Car ID."
+    #                 )
+
+    @api.constrains('qty', 'lot_id', 'requisition_type')
+    def _check_lot_stock_qty(self):
+        for rec in self:
+            if rec.requisition_type != 'purchase':
+                continue
+            if not rec.lot_id:
+                continue
+            if rec.lot_id.product_qty <= 0:
+                continue
+
+            if rec.qty > rec.lot_id.product_qty:
+                raise ValidationError(
+                    "Requested quantity exceeds available stock for this Lot / Car ID."
+                )
 
 
 class ProductProduct(models.Model):

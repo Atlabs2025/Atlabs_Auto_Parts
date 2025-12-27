@@ -96,6 +96,8 @@
 <!--                                        <field name="product_id" context="{'default_type':'service'}"/>-->
 <!--                                        <field name="product_id" domain="[( 'categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []" />-->
                                         <field name="product_id" domain="[('categ_id.name', '=', 'Non Inventory')] if requisition_type == 'purchase' else []" context="{'default_set_non_inventory': requisition_type == 'purchase'}"/>
+<!--                                        <field name="lot_id" readonly="requisition_type=='purchase'"/>-->
+                                        <field name="lot_id" context="{'default_product_id': product_id}" readonly="requisition_type=='internal'"/>
 
 
                                         <field name="description" readonly="requisition_type=='internal'"/>
