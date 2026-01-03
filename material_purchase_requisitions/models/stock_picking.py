@@ -51,44 +51,139 @@ class StockPicking(models.Model):
                 rec.department_id = rec.employee_id.department_id.id
 
 
+
+
     # def button_validate(self):
     #     res = super(StockPicking, self).button_validate()
     #
     #     for picking in self:
-    #         # try to get linked purchase.order (recommended: use purchase_id)
     #         po = picking.purchase_id or self.env['purchase.order'].search([('name', '=', picking.origin)], limit=1)
     #
     #         if po and po.custom_requisition_id:
     #             req_id = po.custom_requisition_id.id
     #
-    #
     #             picking.sudo().write({'custom_requisition_id': req_id})
-    #
-    #             #  write onto moves (so stock.move.epr_id is filled)
     #             picking.move_ids_without_package.sudo().write({'epr_id': req_id})
-    #
-    #             #  onto move lines (so stock.move.line.epr_id is filled)
     #             picking.move_line_ids.sudo().write({'epr_id': req_id})
+    #
+    #         # 🔥 FORCE RECALCULATE AVAILABLE QTY AFTER VALIDATION
+    #         picking.move_ids_without_package._compute_available_qty()
     #
     #     return res
 
+    # def button_validate(self):
+    #
+    #     for picking in self:
+    #
+    #         # 🔹 Get PO
+    #         po = picking.purchase_id or self.env['purchase.order'].search(
+    #             [('name', '=', picking.origin)], limit=1
+    #         )
+    #
+    #         if not po or not po.custom_requisition_id:
+    #             continue
+    #
+    #         requisition = po.custom_requisition_id
+    #
+    #         # 🔹 Loop through stock moves
+    #         for move in picking.move_ids_without_package:
+    #
+    #             # requisition line for same product
+    #             req_line = requisition.requisition_line_ids.filtered(
+    #                 lambda l: l.product_id == move.product_id and l.lot_id
+    #             )
+    #
+    #             if not req_line:
+    #                 continue
+    #
+    #             lot = req_line[0].lot_id
+    #
+    #             # 🔹 Create / update move lines
+    #             if not move.move_line_ids:
+    #                 self.env['stock.move.line'].create({
+    #                     'move_id': move.id,
+    #                     'picking_id': picking.id,
+    #                     'product_id': move.product_id.id,
+    #                     'product_uom_id': move.product_uom.id,
+    #                     'location_id': move.location_id.id,
+    #                     'location_dest_id': move.location_dest_id.id,
+    #                     'quantity': move.product_uom_qty,
+    #                     'lot_id': lot.id,
+    #                 })
+    #             else:
+    #                 move.move_line_ids.write({
+    #                     'lot_id': lot.id,
+    #                     'quantity': move.product_uom_qty,
+    #                 })
+    #
+    #     # 🔥 NOW call super → no error
+    #     res = super(StockPicking, self).button_validate()
+    #
+    #     return res
+    #
+    #
+# dec 30 for lot displaying
     def button_validate(self):
-        res = super(StockPicking, self).button_validate()
 
         for picking in self:
-            po = picking.purchase_id or self.env['purchase.order'].search([('name', '=', picking.origin)], limit=1)
 
-            if po and po.custom_requisition_id:
-                req_id = po.custom_requisition_id.id
+            # 🔹 Get PO
+            po = picking.purchase_id or self.env['purchase.order'].search(
+                [('name', '=', picking.origin)], limit=1
+            )
 
-                picking.sudo().write({'custom_requisition_id': req_id})
-                picking.move_ids_without_package.sudo().write({'epr_id': req_id})
-                picking.move_line_ids.sudo().write({'epr_id': req_id})
+            if not po or not po.custom_requisition_id:
+                continue
 
-            # 🔥 FORCE RECALCULATE AVAILABLE QTY AFTER VALIDATION
-            picking.move_ids_without_package._compute_available_qty()
+            requisition = po.custom_requisition_id
+            req_id = requisition.id
 
+            # 🔹 set epr on picking
+            picking.sudo().write({
+                'custom_requisition_id': req_id
+            })
+
+            # 🔹 Loop through stock moves
+            for move in picking.move_ids_without_package:
+
+                # 🔹 set epr on move
+                move.sudo().write({
+                    'epr_id': req_id
+                })
+
+                req_line = requisition.requisition_line_ids.filtered(
+                    lambda l: l.product_id == move.product_id and l.lot_id
+                )
+
+                if not req_line:
+                    continue
+
+                lot = req_line[0].lot_id
+
+                # 🔹 Create / update move lines
+                if not move.move_line_ids:
+                    self.env['stock.move.line'].sudo().create({
+                        'move_id': move.id,
+                        'picking_id': picking.id,
+                        'product_id': move.product_id.id,
+                        'product_uom_id': move.product_uom.id,
+                        'location_id': move.location_id.id,
+                        'location_dest_id': move.location_dest_id.id,
+                        'quantity': move.product_uom_qty,
+                        'lot_id': lot.id,
+                        'epr_id': req_id,  # ✅ HERE
+                    })
+                else:
+                    move.move_line_ids.sudo().write({
+                        'lot_id': lot.id,
+                        'quantity': move.product_uom_qty,
+                        'epr_id': req_id,  # ✅ HERE
+                    })
+
+        # 🔥 finally validate
+        res = super(StockPicking, self).button_validate()
         return res
+
 
 
 class StockMove(models.Model):
@@ -113,16 +208,6 @@ class StockMove(models.Model):
 
 
 
-    # @api.depends('product_id', 'location_id')
-    # def _compute_available_qty(self):
-    #     for rec in self:
-    #         qty = 0.0
-    #         if rec.product_id and rec.location_id:
-    #             # get quantity available in that location
-    #             qty = rec.product_id.with_context(location=rec.location_id.id).qty_available
-    #
-    #         # ✅ ensure negative values display as 0
-    #         rec.available_qty = max(qty, 0.0)
 
 # changed function on december3 because stock not comming
     @api.depends('product_id')
@@ -134,7 +219,11 @@ class StockMove(models.Model):
             # Get the product on-hand quantity AFTER picking validation
             rec.available_qty = rec.product_id.qty_available
 
+
+
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
 
 
 
@@ -143,3 +232,5 @@ class StockMoveLine(models.Model):
 
     epr_id = fields.Many2one('material.purchase.requisition', string="Requisition")
     car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
+
+

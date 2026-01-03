@@ -15,8 +15,12 @@
             <field name="vendor_id"/>
             <field name="uom_id"/>
             <field name="part_location"/>
-            <field name="available_qty"/>
+            <field name="available_qty" column_invisible="1"/>
+             <field name="lot_qty"/>
             <field name="epr_id" widget="many2one"/>
+            <field name="lot_id" widget="many2one"/>
+
+
         </list>
     </field>
 </record>
