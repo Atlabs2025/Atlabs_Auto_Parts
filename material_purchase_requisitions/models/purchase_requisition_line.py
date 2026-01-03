@@ -259,27 +259,58 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 class ProductProduct(models.Model):
     _inherit = 'product.product'
-
-
+# added on jan 03 create write
     @api.model
     def create(self, vals):
-        # Check if flag is passed from MPR lines
+        # Called from Material Purchase Requisition
         if self.env.context.get('default_set_non_inventory'):
-            category = self.env['product.category'].search([('name', '=', 'Non Inventory')], limit=1)
+            category = self.env['product.category'].search(
+                [('name', '=', 'Non Inventory')], limit=1
+            )
             if category:
                 vals['categ_id'] = category.id
 
-        return super().create(vals)
+            # 🔥 IMPORTANT PART
+            vals['tracking'] = 'lot'  # 👈 Track by Lot
 
-
-
+        return super(ProductProduct, self).create(vals)
 
     def write(self, vals):
         if self.env.context.get('default_set_non_inventory'):
-            category = self.env['product.category'].search([('name', '=', 'Non Inventory')], limit=1)
+            category = self.env['product.category'].search(
+                [('name', '=', 'Non Inventory')], limit=1
+            )
             if category:
                 vals['categ_id'] = category.id
-        return super().write(vals)
+
+            # 🔥 ensure tracking stays lot
+            vals['tracking'] = 'lot'
+
+        return super(ProductProduct, self).write(vals)
+
+
+
+
+
+    # @api.model
+    # def create(self, vals):
+    #     # Check if flag is passed from MPR lines
+    #     if self.env.context.get('default_set_non_inventory'):
+    #         category = self.env['product.category'].search([('name', '=', 'Non Inventory')], limit=1)
+    #         if category:
+    #             vals['categ_id'] = category.id
+    #
+    #     return super().create(vals)
+    #
+    #
+    #
+    #
+    # def write(self, vals):
+    #     if self.env.context.get('default_set_non_inventory'):
+    #         category = self.env['product.category'].search([('name', '=', 'Non Inventory')], limit=1)
+    #         if category:
+    #             vals['categ_id'] = category.id
+    #     return super().write(vals)
 
 
 
