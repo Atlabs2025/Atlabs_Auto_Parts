@@ -215,17 +215,29 @@ class StockAnalysisView(models.Model):
                            AND sp.car_id IS NOT NULL
                            AND sml.lot_id IS NOT NULL
                            AND sml.epr_id = epr.id
-
-                           -- 🔥 HIDE ONLY WHEN APPROVED AND STOCK ZERO
-                           AND NOT (
-                             epr.state IN ('approve', 'partial')
-                                 AND mprl.stock_qty = 0
-                             )
-                             );
+                           
+                           
+                           -- 🔥 FINAL RULES
+                           AND epr.state != 'partial'
+                           AND COALESCE(mprl.stock_qty, 0) > 0
+                           );
                          """)
 
+                             
+                             
+                             
 
-
+                             
+                             
+                             
+# use this code  when client complain jan 03 removed
+                         #   -- 🔥 HIDE ONLY WHEN APPROVED AND STOCK ZERO
+                         #   AND NOT (
+                         #     epr.state IN ('approve', 'partial')
+                         #         AND mprl.stock_qty = 0
+                         #     )
+                         #     );
+                         # """)
 
 
 
