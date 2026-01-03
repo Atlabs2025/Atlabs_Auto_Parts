@@ -76,7 +76,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     sale_price = fields.Float(string="Sale Price")
     # stock_qty = fields.Float(string="On Hand Quantity", readonly=True)
 
-    stock_qty = fields.Float(string="Stock", compute="_compute_stock_qty", readonly=True)
+    stock_qty = fields.Float(string="Stock", compute="_compute_stock_qty", readonly=True, store=True)
     # stock_qty = fields.Float(string="Stock")
 
     from_job_card = fields.Boolean(
