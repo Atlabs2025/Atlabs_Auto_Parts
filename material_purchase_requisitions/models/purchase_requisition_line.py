@@ -77,6 +77,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     # stock_qty = fields.Float(string="On Hand Quantity", readonly=True)
 
     stock_qty = fields.Float(string="Stock", compute="_compute_stock_qty", readonly=True)
+    # stock_qty = fields.Float(string="Stock")
 
     from_job_card = fields.Boolean(
         string='From Job Card')
@@ -92,6 +93,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     picking_created = fields.Boolean(string="Picking Created", default=False)
 
     lot_id = fields.Many2one('stock.lot',string='Lot / Car ID',domain="[('product_id', '=', product_id)]",)
+
 
     @api.depends('stock_qty')
     def _compute_is_stock(self):
@@ -125,7 +127,8 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 rec.stock_qty = 0.0
 
 
-# new function added on dec 16 for description changes
+
+    # new function added on dec 16 for description changes
 
     # @api.onchange('product_id')
     # def onchange_product_id(self):
@@ -236,14 +239,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
             if rec.requisition_type == 'purchase' and not rec.lot_id:
                 raise ValidationError("Lot / Car ID is mandatory for Purchase requisition.")
 
-    # @api.constrains('qty', 'lot_id', 'requisition_type')
-    # def _check_lot_stock_qty(self):
-    #     for rec in self:
-    #         if rec.requisition_type == 'purchase' and rec.lot_id:
-    #             if rec.qty > rec.lot_id.product_qty:
-    #                 raise ValidationError(
-    #                     "Requested quantity exceeds available stock for this Lot / Car ID."
-    #                 )
+
 
     @api.constrains('qty', 'lot_id', 'requisition_type')
     def _check_lot_stock_qty(self):
@@ -274,6 +270,9 @@ class ProductProduct(models.Model):
                 vals['categ_id'] = category.id
 
         return super().create(vals)
+
+
+
 
     def write(self, vals):
         if self.env.context.get('default_set_non_inventory'):
