@@ -13,6 +13,7 @@
             <field name="product_id" domain="[('categ_id.name', '=', 'Non Inventory')]"/>
 
             <field name="vendor_id"/>
+            <field name="employee_id"/>
             <field name="uom_id"/>
             <field name="part_location"/>
             <field name="available_qty" column_invisible="1"/>
