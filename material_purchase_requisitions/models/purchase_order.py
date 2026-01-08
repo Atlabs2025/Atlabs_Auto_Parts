@@ -266,6 +266,17 @@ Purchase Department"""
 
 
 
+# added this function on jan 8 for getting the car details in picking
+    def _prepare_picking(self):
+        vals = super()._prepare_picking()
+        vals.update({
+            'car_id': self.car_id.id,
+            'vehicle_name': self.vehicle_name,
+            'vin_sn': self.vin_sn,
+        })
+        return vals
+
+
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
