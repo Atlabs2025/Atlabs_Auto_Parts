@@ -1,0 +1,70 @@
+<odoo>
+
+    <record id="view_kpi_parts_report_list" model="ir.ui.view">
+        <field name="name">kpi.parts.report.list</field>
+        <field name="model">kpi.parts.report</field>
+        <field name="arch" type="xml">
+            <list string="KPI Parts Report" create="false" edit="false">
+                <header>
+                    <button name="action_print_pdf"
+                            string="PDF"
+                            type="object"
+                            class="btn-primary"/>
+
+                    <button name="action_print_xlsx"
+                            string="XLSX"
+                            type="object"
+                            class="btn-secondary"/>
+                </header>
+                <field name="sn"/>
+                <field name="epr_id" column_invisible="1"/>
+                <field name="car_id"/>
+                <field name="vin_sn"/>
+                <field name="department_id"/>
+                <field name="employee_id"/>
+                <field name="request_date"/>
+                <field name="product_id"/>
+                <field name="parts_price"/>
+                <field name="po_date"/>
+                <field name="vendor_id"/>
+
+                <field name="received_date"/>
+                <field name="days_to_received"/>
+                <field name="issue_date"/>
+
+<!--                <field name="cost_type"/>-->
+<!--                <field name="part_id"/>-->
+<!--                <field name="qty"/>-->
+<!--                <field name="po_date"/>-->
+<!--                <field name="vendor_id"/>-->
+<!--                <field name="parts_price"/>-->
+<!--                <field name="unit_price"/>-->
+<!--                <field name="total"/>-->
+<!--                <field name="received_date"/>-->
+<!--                <field name="days_to_received"/>-->
+<!--                <field name="issue_date"/>-->
+<!--                <field name="taken_by"/>-->
+            </list>
+        </field>
+    </record>
+
+    <record id="action_kpi_parts_report" model="ir.actions.act_window">
+        <field name="name">KPI Parts Report</field>
+        <field name="res_model">kpi.parts.report</field>
+        <field name="view_mode">list</field>
+    </record>
+
+
+
+
+
+    <menuitem id="menu_kpi_root"
+              name="KPI Reports"
+              sequence="50"/>
+
+    <menuitem id="menu_kpi_parts_report"
+              name="Parts KPI Report"
+              parent="menu_kpi_root"
+              action="action_kpi_parts_report"/>
+
+</odoo>
