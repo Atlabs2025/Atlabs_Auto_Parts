@@ -719,6 +719,8 @@ class MaterialPurchaseRequisition(models.Model):
                 })
                 line.picking_created = True
 
+                line.parts_state = 'approved'
+
             # -----------------------------------------------------
             # Confirm & assign
             # -----------------------------------------------------

@@ -112,6 +112,7 @@
                                         <field name="sale_price" column_invisible="1"/>
                                         <field name="partner_id" groups="material_purchase_requisitions.group_purchase_requisition_user,purchase.group_purchase_user,material_purchase_requisitions.group_purchase_requisition_manager,material_purchase_requisitions.group_purchase_requisition_department" modifiers="{'readonly': [('requisition_type', '!=', 'purchase')]}" widget="many2many_tags" column_invisible="context.get('from_job_card_origin', False)"/>
                                        <field name="image" widget="image"/>
+                                       <field name="parts_state"/>
 
                                     </list>
                                 </field>

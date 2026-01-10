@@ -94,6 +94,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
     lot_id = fields.Many2one('stock.lot',string='Lot / Car ID',domain="[('product_id', '=', product_id)]",)
 
+    parts_state = fields.Selection([('approved', 'Approved'),('not_approved', 'Not Approved'),],string="Parts State",default='not_approved',tracking=True)
 
     @api.depends('stock_qty')
     def _compute_is_stock(self):
@@ -128,24 +129,22 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 
 
-    # new function added on dec 16 for description changes
+
 
     # @api.onchange('product_id')
     # def onchange_product_id(self):
     #     for rec in self:
-    #         if rec.product_id:
+    #         rec.lot_id = False  # 🔥 IMPORTANT
     #
-    #             # ✅ CONDITION ADDED HERE
+    #         if rec.product_id:
     #             if rec.requisition_type == 'purchase':
     #                 rec.description = rec.product_id.display_name
     #             else:
-    #                 rec.description = False  # internal → no auto-fill
+    #                 rec.description = False
     #
     #             rec.uom = rec.product_id.uom_id.id
     #             rec.part_no = rec.product_id.default_code
     #             rec.cost_price = rec.product_id.standard_price
-    #
-    #             # ✔ Auto tick is_stock based on available quantity
     #             rec.is_stock = rec.product_id.qty_available > 0
     #         else:
     #             rec.description = False
@@ -154,45 +153,57 @@ class MaterialPurchaseRequisitionLine(models.Model):
     #             rec.cost_price = False
     #             rec.is_stock = False
 
+# changed on jan 10 for duplication of product for the same car id
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
             rec.lot_id = False  # 🔥 IMPORTANT
 
-            if rec.product_id:
-                if rec.requisition_type == 'purchase':
-                    rec.description = rec.product_id.display_name
-                else:
-                    rec.description = False
-
-                rec.uom = rec.product_id.uom_id.id
-                rec.part_no = rec.product_id.default_code
-                rec.cost_price = rec.product_id.standard_price
-                rec.is_stock = rec.product_id.qty_available > 0
-            else:
+            if not rec.product_id:
                 rec.description = False
                 rec.uom = False
                 rec.part_no = False
                 rec.cost_price = False
                 rec.is_stock = False
+                return
 
-    # @api.onchange('requisition_type')
-    # def _onchange_requisition_type(self):
-    #     if self.requisition_type == 'purchase':
-    #         self.is_stock = False
+            # 🔒 DUPLICATE CHECK (ONLY FOR PURCHASE)
+            if (
+                    rec.requisition_type == 'purchase'
+                    and rec.requisition_id
+                    and rec.requisition_id.car_id
+            ):
+                duplicate = self.env['material.purchase.requisition.line'].search([
+                    ('id', '!=', rec.id),
+                    ('product_id', '=', rec.product_id.id),
+                    ('requisition_type', '=', 'purchase'),
+                    ('requisition_id.car_id', '=', rec.requisition_id.car_id.id),
+                ], limit=1)
 
-    # @api.onchange('requisition_type')
-    # def _onchange_requisition_type(self):
-    #     for rec in self:
-    #         # 🔥 Always clear product & related fields when type changes
-    #         rec.product_id = False
-    #         rec.description = False
-    #         rec.uom = False
-    #         rec.part_no = False
-    #         rec.cost_price = 0.0
-    #         rec.sale_price = 0.0
-    #         rec.stock_qty = 0.0
-    #         rec.is_stock = False
+                if duplicate:
+                    warning = {
+                        'title': 'Duplicate Product Not Allowed',
+                        'message': (
+                            f"The product '{rec.product_id.display_name}' "
+                            f"is already requested for this CAR ID "
+                        )
+                    }
+
+                    rec.product_id = False
+                    return {'warning': warning}
+
+            # 🔹 NORMAL EXISTING LOGIC
+            if rec.requisition_type == 'purchase':
+                rec.description = rec.product_id.display_name
+            else:
+                rec.description = False
+
+            rec.uom = rec.product_id.uom_id.id
+            rec.part_no = rec.product_id.default_code
+            rec.cost_price = rec.product_id.standard_price
+            rec.is_stock = rec.product_id.qty_available > 0
+
+   
 
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
