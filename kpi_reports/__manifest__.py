@@ -10,6 +10,7 @@
     ],
 'data': [
     'security/ir.model.access.csv',
+    'report/kpi_parts_pdf.xml',
     'views/kpi_parts_report_view.xml',
     # 'views/data.xml',
 

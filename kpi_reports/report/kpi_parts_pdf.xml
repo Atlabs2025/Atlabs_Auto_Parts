@@ -1,0 +1,69 @@
+<odoo>
+<template id="kpi_parts_report_pdf">
+    <t t-call="web.external_layout">
+        <main>
+            <div class="page">
+                <h2 style="text-align:center;">KPI Parts Report</h2>
+
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>SN</th>
+                            <th>EPR</th>
+                            <th>Car</th>
+                            <th>VIN</th>
+                            <th>Department</th>
+                            <th>Requester</th>
+                            <th>Product</th>
+                            <th>Parts Price</th>
+                            <th>Received Date</th>
+                            <th>Issue Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="docs" t-as="rec">
+                            <tr>
+                                <td><t t-esc="rec.sn"/></td>
+                                <td><t t-esc="rec.epr_id.display_name"/></td>
+                                <td><t t-esc="rec.car_id.display_name"/></td>
+                                <td><t t-esc="rec.vin_sn"/></td>
+                                <td><t t-esc="rec.department_id.name"/></td>
+                                <td><t t-esc="rec.employee_id.name"/></td>
+                                <td><t t-esc="rec.product_id.display_name"/></td>
+                                <td class="text-end">
+                                    <t t-esc="rec.parts_price"/>
+                                </td>
+                                <td>
+                                    <t t-esc="rec.received_date"/>
+                                </td>
+                                <td>
+                                    <t t-esc="rec.issue_date"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </t>
+</template>
+
+
+
+
+
+
+
+
+<record id="action_kpi_parts_report_pdf" model="ir.actions.report">
+    <field name="name">KPI Parts Report</field>
+    <field name="model">kpi.parts.report</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">kpi_reports.kpi_parts_report_pdf</field>
+    <field name="report_file">kpi_reports.kpi_parts_report_pdf</field>
+    <field name="print_report_name">'KPI Parts Report'</field>
+</record>
+
+
+
+</odoo>
