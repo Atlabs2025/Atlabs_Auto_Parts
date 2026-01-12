@@ -1,0 +1,13 @@
+/* SN HEADER - force hard left */
+.o_list_view thead th[data-name="sn"] {
+    text-align: left !important;
+    padding-left: 2px !important;
+}
+
+/* SN VALUES */
+.o_list_view tbody td.o_sn_left {
+    text-align: left !important;
+    padding-left: 2px !important;
+}
+
+

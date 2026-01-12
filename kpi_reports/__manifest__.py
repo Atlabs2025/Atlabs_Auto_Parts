@@ -18,6 +18,10 @@
 
 ],
     'assets': {
+        'web.assets_backend': [
+        # 'kpi_reports/static/src/css/list_view.css',
+        # 'kpi_reports/static/src/js/list_views.js',
+    ],
 
     },
     'license': 'LGPL-3',

@@ -203,7 +203,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
             rec.cost_price = rec.product_id.standard_price
             rec.is_stock = rec.product_id.qty_available > 0
 
-   
+
 
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
