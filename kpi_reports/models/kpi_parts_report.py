@@ -14,10 +14,13 @@ class KpiPartsReport(models.Model):
     _description = "KPI Parts Report"
     _auto = False
 
-    sn = fields.Integer(string="S.N")
+    # sn = fields.Integer(string="S.N")
 
-    car_id = fields.Many2one('vehicle.details', string="Car ID"
-                                                       "")
+    sn = fields.Char(string="S.N", compute="_compute_sn", store=False)
+
+
+
+    car_id = fields.Many2one('vehicle.details', string="Car ID")
     vin_sn = fields.Char(string="VIN/SN")
     department_id = fields.Many2one('hr.department',string="Department")
 
@@ -42,6 +45,10 @@ class KpiPartsReport(models.Model):
     days_to_received = fields.Integer(string="Days to Received")
     issue_date = fields.Date(string="Issue Date")
 
+
+    def _compute_sn(self):
+        for i, rec in enumerate(self, start=1):
+            rec.sn = str(i)
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
