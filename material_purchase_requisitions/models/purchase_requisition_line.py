@@ -131,29 +131,60 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 
 
-    # @api.onchange('product_id')
-    # def onchange_product_id(self):
-    #     for rec in self:
-    #         rec.lot_id = False  # 🔥 IMPORTANT
-    #
-    #         if rec.product_id:
-    #             if rec.requisition_type == 'purchase':
-    #                 rec.description = rec.product_id.display_name
-    #             else:
-    #                 rec.description = False
-    #
-    #             rec.uom = rec.product_id.uom_id.id
-    #             rec.part_no = rec.product_id.default_code
-    #             rec.cost_price = rec.product_id.standard_price
-    #             rec.is_stock = rec.product_id.qty_available > 0
-    #         else:
-    #             rec.description = False
-    #             rec.uom = False
-    #             rec.part_no = False
-    #             rec.cost_price = False
-    #             rec.is_stock = False
+
 
 # changed on jan 10 for duplication of product for the same car id
+#     @api.onchange('product_id')
+#     def onchange_product_id(self):
+#         for rec in self:
+#             rec.lot_id = False  # 🔥 IMPORTANT
+#
+#             if not rec.product_id:
+#                 rec.description = False
+#                 rec.uom = False
+#                 rec.part_no = False
+#                 rec.cost_price = False
+#                 rec.is_stock = False
+#                 return
+#
+#             # 🔒 DUPLICATE CHECK (ONLY FOR PURCHASE)
+#             if (
+#                     rec.requisition_type == 'purchase'
+#                     and rec.requisition_id
+#                     and rec.requisition_id.car_id
+#             ):
+#                 duplicate = self.env['material.purchase.requisition.line'].search([
+#                     ('id', '!=', rec.id),
+#                     ('product_id', '=', rec.product_id.id),
+#                     ('requisition_type', '=', 'purchase'),
+#                     ('requisition_id.car_id', '=', rec.requisition_id.car_id.id),
+#                 ], limit=1)
+#
+#                 if duplicate:
+#                     warning = {
+#                         'title': 'Duplicate Product Not Allowed',
+#                         'message': (
+#                             f"The product '{rec.product_id.display_name}' "
+#                             f"is already requested for this CAR ID "
+#                         )
+#                     }
+#
+#                     rec.product_id = False
+#                     return {'warning': warning}
+#
+#             # 🔹 NORMAL EXISTING LOGIC
+#             if rec.requisition_type == 'purchase':
+#                 rec.description = rec.product_id.display_name
+#             else:
+#                 rec.description = False
+#
+#             rec.uom = rec.product_id.uom_id.id
+#             rec.part_no = rec.product_id.default_code
+#             rec.cost_price = rec.product_id.standard_price
+#             rec.is_stock = rec.product_id.qty_available > 0
+
+
+# function changed on jan 13
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
@@ -167,30 +198,29 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 rec.is_stock = False
                 return
 
-            # 🔒 DUPLICATE CHECK (ONLY FOR PURCHASE)
+            # 🔒 DUPLICATE CHECK (WITHIN SAME REQUISITION FORM)
             if (
                     rec.requisition_type == 'purchase'
                     and rec.requisition_id
                     and rec.requisition_id.car_id
             ):
-                duplicate = self.env['material.purchase.requisition.line'].search([
-                    ('id', '!=', rec.id),
-                    ('product_id', '=', rec.product_id.id),
-                    ('requisition_type', '=', 'purchase'),
-                    ('requisition_id.car_id', '=', rec.requisition_id.car_id.id),
-                ], limit=1)
+                for line in rec.requisition_id.requisition_line_ids:
+                    if (
+                            line.id != rec.id
+                            and line.product_id == rec.product_id
+                            and line.requisition_type == 'purchase'
+                    ):
+                        rec.product_id = False
 
-                if duplicate:
-                    warning = {
-                        'title': 'Duplicate Product Not Allowed',
-                        'message': (
-                            f"The product '{rec.product_id.display_name}' "
-                            f"is already requested for this CAR ID "
-                        )
-                    }
-
-                    rec.product_id = False
-                    return {'warning': warning}
+                        return {
+                            'warning': {
+                                'title': 'Product Already Used',
+                                'message': (
+                                    f"The product '{line.product_id.display_name}' "
+                                    f"is already selected for this CAR ID."
+                                )
+                            }
+                        }
 
             # 🔹 NORMAL EXISTING LOGIC
             if rec.requisition_type == 'purchase':
@@ -202,8 +232,6 @@ class MaterialPurchaseRequisitionLine(models.Model):
             rec.part_no = rec.product_id.default_code
             rec.cost_price = rec.product_id.standard_price
             rec.is_stock = rec.product_id.qty_available > 0
-
-
 
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
