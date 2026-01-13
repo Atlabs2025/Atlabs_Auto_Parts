@@ -38,104 +38,23 @@ class KpiPartsReport(models.Model):
 
     product_id = fields.Many2one('product.product', string="Parts")
     parts_price = fields.Float(string="Parts Price")
+    po_number = fields.Char(string="PO Number")
     po_date = fields.Date(string="PO Date")
     vendor_id = fields.Many2one('res.partner', string="Vendor")
 
     received_date = fields.Date(string="Received Date")
     days_to_received = fields.Integer(string="Days to Received")
     issue_date = fields.Date(string="Issue Date")
+    requested_qty = fields.Float(string="Requested Quantity")
+    received_qty = fields.Float(string="Received Quantity")
+
+
+
 
 
     def _compute_sn(self):
         for i, rec in enumerate(self, start=1):
             rec.sn = str(i)
-
-    def init(self):
-        tools.drop_view_if_exists(self.env.cr, self._table)
-
-        self.env.cr.execute("""
-            CREATE VIEW kpi_parts_report AS (
-                SELECT
-                    row_number() OVER () AS id,
-                    row_number() OVER () AS sn,
-
-                    -- Requisition
-                    epr.id                    AS epr_id,
-                    epr.car_id                AS car_id,
-                    vd.vin_sn                 AS vin_sn,
-                    epr.department_id         AS department_id,
-                    epr.employee_id           AS employee_id,
-                    epr.request_date          AS request_date,
-
-                    -- Product
-                    eprl.product_id           AS product_id,
-                    eprl.qty                  AS qty,
-
-                    -- PO
-                    po.date_order             AS po_date,
-                    po.partner_id             AS vendor_id,
-                    pol.price_unit            AS parts_price,
-
-                    -- GRN received date
-                    grn.date_done::date       AS received_date,
-
-                    -- Days to received
-                    CASE
-                        WHEN grn.date_done IS NOT NULL
-                             AND epr.request_date IS NOT NULL
-                        THEN (grn.date_done::date - epr.request_date)
-                        ELSE NULL
-                    END                        AS days_to_received,
-
-                    --  REAL STOCK OUT DATE (Moves History)
-                    issue_ml.issue_date       AS issue_date
-
-                FROM material_purchase_requisition epr
-
-                LEFT JOIN vehicle_details vd
-                    ON vd.id = epr.car_id
-
-                LEFT JOIN material_purchase_requisition_line eprl
-                    ON eprl.requisition_id = epr.id
-
-                LEFT JOIN purchase_order po
-                    ON po.custom_requisition_id = epr.id
-
-                LEFT JOIN purchase_order_line pol
-                    ON pol.order_id = po.id
-                   AND pol.product_id = eprl.product_id
-
-                -- Incoming GRN
-                LEFT JOIN stock_move sm
-                    ON sm.purchase_line_id = pol.id
-
-                LEFT JOIN stock_picking grn
-                    ON grn.id = sm.picking_id
-                   AND grn.state = 'done'
-                   AND grn.picking_type_id IN (
-                        SELECT id FROM stock_picking_type WHERE code = 'incoming'
-                   )
-
-                --  STOCK OUT FROM MOVE LINE (OUTGOING)
-                LEFT JOIN LATERAL (
-                    SELECT
-                        sml.date::date AS issue_date
-                    FROM stock_move_line sml
-                    JOIN stock_move sm2 ON sm2.id = sml.move_id
-                    JOIN stock_picking sp2 ON sp2.id = sm2.picking_id
-                    JOIN stock_picking_type spt ON spt.id = sp2.picking_type_id
-                    WHERE
-                        spt.code = 'outgoing'
-                        AND sm2.product_id = eprl.product_id
-                        AND sml.quantity > 0
-                        AND sp2.state = 'done'
-                    ORDER BY sml.date ASC
-                    LIMIT 1
-                ) issue_ml ON TRUE
-            )
-        """)
-
-
 
 
 
@@ -148,34 +67,37 @@ class KpiPartsReport(models.Model):
     #                 row_number() OVER () AS id,
     #                 row_number() OVER () AS sn,
     #
-    #                 epr.car_id                  AS car_id,
-    #                 vd.vin_sn                   AS vin_sn,
-    #                 epr.department_id           AS department_id,
-    #                 epr.employee_id             AS employee_id,
-    #                 epr.request_date            AS request_date,
-    #                 epr.id                      AS epr_id,
+    #                 -- Requisition
+    #                 epr.id                    AS epr_id,
+    #                 epr.car_id                AS car_id,
+    #                 vd.vin_sn                 AS vin_sn,
+    #                 epr.department_id         AS department_id,
+    #                 epr.employee_id           AS employee_id,
+    #                 epr.request_date          AS request_date,
     #
-    #                 eprl.product_id             AS product_id,
-    #                 eprl.qty                    AS qty,
+    #                 -- Product
+    #                 eprl.product_id           AS product_id,
+    #                 eprl.qty                  AS qty,
     #
-    #                 po.date_order               AS po_date,
-    #                 po.partner_id               AS vendor_id,
-    #                 pol.price_unit              AS parts_price,
+    #                 -- PO
+    #                 po.name                   AS po_number,
+    #                 po.date_order             AS po_date,
+    #                 po.partner_id             AS vendor_id,
+    #                 pol.price_unit            AS parts_price,
     #
-    #                 -- ✅ GRN received date
-    #                 grn.date_done::date         AS received_date,
+    #                 -- GRN received date
+    #                 grn.date_done::date       AS received_date,
     #
-    #                 -- ✅ Days to received
+    #                 -- Days to received
     #                 CASE
     #                     WHEN grn.date_done IS NOT NULL
     #                          AND epr.request_date IS NOT NULL
     #                     THEN (grn.date_done::date - epr.request_date)
     #                     ELSE NULL
-    #                 END                          AS days_to_received,
+    #                 END                        AS days_to_received,
     #
-    #                 -- ✅ Issue date (internal picking)
-    #                 issue.scheduled_date::date AS issue_date
-    #
+    #                 --  REAL STOCK OUT DATE (Moves History)
+    #                 issue_ml.issue_date       AS issue_date
     #
     #             FROM material_purchase_requisition epr
     #
@@ -192,11 +114,10 @@ class KpiPartsReport(models.Model):
     #                 ON pol.order_id = po.id
     #                AND pol.product_id = eprl.product_id
     #
-    #             -- 🔹 stock move from PO line
+    #             -- Incoming GRN
     #             LEFT JOIN stock_move sm
     #                 ON sm.purchase_line_id = pol.id
     #
-    #             -- 🔹 GRN picking (incoming)
     #             LEFT JOIN stock_picking grn
     #                 ON grn.id = sm.picking_id
     #                AND grn.state = 'done'
@@ -204,15 +125,131 @@ class KpiPartsReport(models.Model):
     #                     SELECT id FROM stock_picking_type WHERE code = 'incoming'
     #                )
     #
-    #             -- 🔹 Issue picking (internal)
-    #             LEFT JOIN stock_picking issue
-    #                 ON issue.custom_requisition_id = epr.id
-    #                AND issue.state = 'done'
-    #                AND issue.picking_type_id IN (
-    #                     SELECT id FROM stock_picking_type WHERE code = 'internal'
-    #                )
+    #             --  STOCK OUT FROM MOVE LINE (OUTGOING)
+    #             LEFT JOIN LATERAL (
+    #                 SELECT
+    #                     sml.date::date AS issue_date
+    #                 FROM stock_move_line sml
+    #                 JOIN stock_move sm2 ON sm2.id = sml.move_id
+    #                 JOIN stock_picking sp2 ON sp2.id = sm2.picking_id
+    #                 JOIN stock_picking_type spt ON spt.id = sp2.picking_type_id
+    #                 WHERE
+    #                     spt.code = 'outgoing'
+    #                     AND sm2.product_id = eprl.product_id
+    #                     AND sml.quantity > 0
+    #                     AND sp2.state = 'done'
+    #                 ORDER BY sml.date ASC
+    #                 LIMIT 1
+    #             ) issue_ml ON TRUE
     #         )
     #     """)
+    #
+
+
+# code changed on jan 13 if any corrections please use above code that  has no requested and received quantity
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+
+        self.env.cr.execute("""
+            CREATE VIEW kpi_parts_report AS (
+                SELECT
+                    row_number() OVER () AS id,
+
+                    -- Requisition
+                    epr.id                      AS epr_id,
+                    epr.car_id                  AS car_id,
+                    vd.vin_sn                   AS vin_sn,
+                    epr.department_id           AS department_id,
+                    epr.employee_id             AS employee_id,
+                    epr.request_date            AS request_date,
+
+                    -- Product
+                    eprl.product_id             AS product_id,
+                    eprl.stock_qty              AS requested_qty,
+
+                    -- PO
+                    po.name                     AS po_number,
+                    po.date_order               AS po_date,
+                    po.partner_id               AS vendor_id,
+                    pol.price_unit              AS parts_price,
+
+                    -- GRN received date
+                    grn.date_done::date         AS received_date,
+
+                    -- Received Quantity (CORRECT)
+                    recv.received_qty           AS received_qty,
+
+                    -- Days to received
+                    CASE
+                        WHEN grn.date_done IS NOT NULL
+                             AND epr.request_date IS NOT NULL
+                        THEN (grn.date_done::date - epr.request_date)
+                        ELSE NULL
+                    END                          AS days_to_received,
+
+                    -- Issue date (OUTGOING)
+                    issue_ml.issue_date         AS issue_date
+
+                FROM material_purchase_requisition epr
+
+                LEFT JOIN vehicle_details vd
+                    ON vd.id = epr.car_id
+
+                LEFT JOIN material_purchase_requisition_line eprl
+                    ON eprl.requisition_id = epr.id
+
+                LEFT JOIN purchase_order po
+                    ON po.custom_requisition_id = epr.id
+
+                LEFT JOIN purchase_order_line pol
+                    ON pol.order_id = po.id
+                   AND pol.product_id = eprl.product_id
+
+                -- Incoming stock move
+                LEFT JOIN stock_move sm
+                    ON sm.purchase_line_id = pol.id
+
+                LEFT JOIN stock_picking grn
+                    ON grn.id = sm.picking_id
+                   AND grn.state = 'done'
+                   AND grn.picking_type_id IN (
+                        SELECT id FROM stock_picking_type WHERE code = 'incoming'
+                   )
+
+                -- Received quantity (GRN)
+                LEFT JOIN LATERAL (
+                    SELECT
+                        SUM(sml.quantity) AS received_qty
+                    FROM stock_move_line sml
+                    JOIN stock_move sm3 ON sm3.id = sml.move_id
+                    JOIN stock_picking sp3 ON sp3.id = sm3.picking_id
+                    JOIN stock_picking_type spt3 ON spt3.id = sp3.picking_type_id
+                    WHERE
+                        spt3.code = 'incoming'
+                        AND sp3.state = 'done'
+                        AND sm3.purchase_line_id = pol.id
+                ) recv ON TRUE
+
+                -- Issue date (Outgoing)
+                LEFT JOIN LATERAL (
+                    SELECT
+                        sml.date::date AS issue_date
+                    FROM stock_move_line sml
+                    JOIN stock_move sm2 ON sm2.id = sml.move_id
+                    JOIN stock_picking sp2 ON sp2.id = sm2.picking_id
+                    JOIN stock_picking_type spt2 ON spt2.id = sp2.picking_type_id
+                    WHERE
+                        spt2.code = 'outgoing'
+                        AND sm2.product_id = eprl.product_id
+                        AND sml.quantity > 0
+                        AND sp2.state = 'done'
+                    ORDER BY sml.date ASC
+                    LIMIT 1
+                ) issue_ml ON TRUE
+            )
+        """)
+
+
 
 
 
@@ -242,8 +279,8 @@ class KpiPartsReport(models.Model):
         # Headers
         # -----------------------
         headers = [
-            'S.N', 'Car ID', 'VIN/SN', 'Department', 'Requester',
-            'Request Date', 'Part', 'Parts Price', 'PO Date', 'Vendor',
+            'S.N', 'Car ID', 'VIN/SN', 'Department','EPR Number', 'Requester',
+            'Request Date','Requested Qty','Received Qty', 'Part', 'Parts Price','PO Number' ,'PO Date', 'Vendor',
             'Received Date', 'Days To Received', 'Issue Date'
         ]
 
@@ -262,16 +299,18 @@ class KpiPartsReport(models.Model):
             sheet.write(row, 1, rec.car_id.car_id or '', text_fmt)
             sheet.write(row, 2, rec.vin_sn or '', text_fmt)
             sheet.write(row, 3, rec.department_id.name or '', text_fmt)
-            sheet.write(row, 4, rec.employee_id.name or '', text_fmt)
-
-            sheet.write(row, 5, rec.request_date or '', date_fmt)
-            sheet.write(row, 6, rec.product_id.display_name or '', text_fmt)
-            sheet.write(row, 7, rec.parts_price or 0.0, num_fmt)
-            sheet.write(row, 8, rec.po_date or '', date_fmt)
-            sheet.write(row, 9, rec.vendor_id.name or '', text_fmt)
-            sheet.write(row, 10, rec.received_date or '', date_fmt)
-            sheet.write(row, 11, rec.days_to_received or 0, num_fmt)
-            sheet.write(row, 12, rec.issue_date or '', date_fmt)
+            sheet.write(row, 4, rec.epr_id.name if rec.epr_id else '', text_fmt)
+            sheet.write(row, 5, rec.employee_id.name or '', text_fmt)
+            sheet.write(row, 6, rec.request_date or 0.0, date_fmt)
+            sheet.write(row, 7, rec.requested_qty or 0.0, num_fmt)
+            sheet.write(row, 8, rec.received_qty or '', num_fmt)
+            sheet.write(row, 9, rec.product_id.display_name or '', text_fmt)
+            sheet.write(row, 10, rec.parts_price or 0.0, num_fmt)
+            sheet.write(row, 11, rec.po_date or '', date_fmt)
+            sheet.write(row, 12, rec.vendor_id.name or '', text_fmt)
+            sheet.write(row, 13, rec.received_date or '', date_fmt)
+            sheet.write(row, 14, rec.days_to_received or 0, num_fmt)
+            sheet.write(row, 15, rec.issue_date or '', date_fmt)
 
             row += 1
             sn += 1

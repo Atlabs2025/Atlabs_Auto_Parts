@@ -13,6 +13,7 @@
                             <th>Car</th>
                             <th>VIN</th>
                             <th>Department</th>
+<!--                            <th>EPR Number</th>-->
                             <th>Requester</th>
                             <th>Product</th>
                             <th>Parts Price</th>

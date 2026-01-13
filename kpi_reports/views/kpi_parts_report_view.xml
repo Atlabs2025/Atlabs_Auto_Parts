@@ -17,14 +17,17 @@
                             class="btn-secondary"/>
                 </header>
                 <field name="sn"/>
-                <field name="epr_id" column_invisible="1"/>
                 <field name="car_id"/>
                 <field name="vin_sn"/>
                 <field name="department_id"/>
+                <field name="epr_id"/>
                 <field name="employee_id"/>
                 <field name="request_date"/>
+                <field name="requested_qty"/>
+                <field name="received_qty"/>
                 <field name="product_id"/>
                 <field name="parts_price"/>
+                <field name="po_number"/>
                 <field name="po_date"/>
                 <field name="vendor_id"/>
 
