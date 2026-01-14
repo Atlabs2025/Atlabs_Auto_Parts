@@ -184,7 +184,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
 #             rec.is_stock = rec.product_id.qty_available > 0
 
 
-# function changed on jan 13
+# jan14 function
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
@@ -198,29 +198,8 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 rec.is_stock = False
                 return
 
-            # 🔒 DUPLICATE CHECK (WITHIN SAME REQUISITION FORM)
-            if (
-                    rec.requisition_type == 'purchase'
-                    and rec.requisition_id
-                    and rec.requisition_id.car_id
-            ):
-                for line in rec.requisition_id.requisition_line_ids:
-                    if (
-                            line.id != rec.id
-                            and line.product_id == rec.product_id
-                            and line.requisition_type == 'purchase'
-                    ):
-                        rec.product_id = False
-
-                        return {
-                            'warning': {
-                                'title': 'Product Already Used',
-                                'message': (
-                                    f"The product '{line.product_id.display_name}' "
-                                    f"is already selected for this CAR ID."
-                                )
-                            }
-                        }
+            #  DUPLICATE CHECK REMOVED COMPLETELY
+            # Same product + same car ID is now ALLOWED
 
             # 🔹 NORMAL EXISTING LOGIC
             if rec.requisition_type == 'purchase':
@@ -232,6 +211,11 @@ class MaterialPurchaseRequisitionLine(models.Model):
             rec.part_no = rec.product_id.default_code
             rec.cost_price = rec.product_id.standard_price
             rec.is_stock = rec.product_id.qty_available > 0
+
+    # function changed on jan 13
+
+
+
 
     @api.onchange('requisition_type')
     def _onchange_requisition_type(self):
