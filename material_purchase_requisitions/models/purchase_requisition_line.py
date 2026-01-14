@@ -96,6 +96,8 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
     parts_state = fields.Selection([('approved', 'Approved'),('not_approved', 'Not Approved'),],string="Parts State",default='not_approved',tracking=True)
 
+    to_pick = fields.Boolean(string="Pick Now",default=True)
+
     @api.depends('stock_qty')
     def _compute_is_stock(self):
         for line in self:
