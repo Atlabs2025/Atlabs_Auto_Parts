@@ -36,6 +36,7 @@ class KpiPartsReport(models.Model):
         string="EPR Number"
     )
 
+    part_type = fields.Char(string="Part Type")
     product_id = fields.Many2one('product.product', string="Parts")
     parts_price = fields.Float(string="Parts Price")
     po_number = fields.Char(string="PO Number")
@@ -47,6 +48,11 @@ class KpiPartsReport(models.Model):
     issue_date = fields.Date(string="Issue Date")
     requested_qty = fields.Float(string="Requested Quantity")
     received_qty = fields.Float(string="Received Quantity")
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account',
+        string='Nature Of Cost',
+        copy=True, required=True
+    )
 
 
 
@@ -164,8 +170,10 @@ class KpiPartsReport(models.Model):
                     epr.request_date            AS request_date,
 
                     -- Product
+                    eprl.part_type              AS part_type,
                     eprl.product_id             AS product_id,
-                    eprl.stock_qty              AS requested_qty,
+                    eprl.qty              AS requested_qty,
+                    eprl.analytic_account_id    AS analytic_account_id,
 
                     -- PO
                     po.name                     AS po_number,
