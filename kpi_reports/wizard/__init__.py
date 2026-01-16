@@ -1,0 +1,1 @@
+from .import kpi_parts_detailed_wizard

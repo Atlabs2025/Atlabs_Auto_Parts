@@ -60,7 +60,12 @@
     </record>
 
 
-
+    <record id="action_kpi_parts_detailed_wizard" model="ir.actions.act_window">
+        <field name="name">Detailed KPI Report</field>
+        <field name="res_model">kpi.parts.detailed.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
 
 
     <menuitem id="menu_kpi_root"
@@ -71,5 +76,12 @@
               name="Parts KPI Report"
               parent="menu_kpi_root"
               action="action_kpi_parts_report"/>
+
+
+    <menuitem id="menu_kpi_parts_detailed_report"
+          name="Detailed KPI Report"
+          parent="menu_kpi_root"
+          action="action_kpi_parts_detailed_wizard"
+          sequence="20"/>
 
 </odoo>

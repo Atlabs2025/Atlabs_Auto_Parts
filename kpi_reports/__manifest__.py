@@ -12,6 +12,7 @@
     'security/ir.model.access.csv',
     'report/kpi_parts_pdf.xml',
     'views/kpi_parts_report_view.xml',
+    'wizard/kpi_parts_detailed_wizard.xml',
     # 'views/data.xml',
 
 
