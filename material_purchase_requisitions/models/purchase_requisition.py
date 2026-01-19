@@ -800,8 +800,12 @@ class MaterialPurchaseRequisition(models.Model):
                     'custom_requisition_line_id': line.id,
                 })
 
-                line.picking_created = True
-                line.parts_state = 'approved'
+                # line.picking_created = True
+                # line.parts_state = 'approved'
+                line.with_context(skip_line_lock=True).write({
+                    'picking_created': True,
+                    'parts_state': 'approved',
+                })
 
             # -------------------------------------------------
             # Confirm & assign picking
@@ -854,7 +858,8 @@ class MaterialPurchaseRequisition(models.Model):
             # -------------------------------------------------
             # OPTIONAL: auto re-tick for next approval
             # -------------------------------------------------
-            lines.write({'to_pick': True})
+            # lines.write({'to_pick': True})
+            lines.with_context(skip_line_lock=True).write({'to_pick': True})
 
         return True
 
