@@ -14,7 +14,6 @@ class StockPicking(models.Model):
     )
 
 
-
     # newly added fields
 
     employee_id = fields.Many2one(
@@ -42,6 +41,7 @@ class StockPicking(models.Model):
         string="Hide from Material Requisition",
         default=False
     )
+
 
     @api.onchange('employee_id')
     def _onchange_employee_id(self):
@@ -233,4 +233,11 @@ class StockMoveLine(models.Model):
     epr_id = fields.Many2one('material.purchase.requisition', string="Requisition")
     car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
 
-
+# only for local purpose
+# class StockReturnPicking(models.TransientModel):
+#     _inherit = 'stock.return.picking'
+#
+#     picking_type_code = fields.Selection(
+#         related='picking_id.picking_type_id.code',
+#         store=False
+#     )

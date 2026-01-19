@@ -229,7 +229,28 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 
 # added function on jan 19 for restricting the editing after save
+    @api.model
+    def create(self, vals):
+        requisition_id = vals.get('requisition_id')
+        if requisition_id:
+            req = self.env['material.purchase.requisition'].browse(requisition_id)
 
+            # 🔥 AFTER FIRST SAVE ONLY
+            if req.create_date and req.write_date and req.write_date > req.create_date:
+                raise ValidationError(
+                    "You cannot add lines after saving the requisition."
+                )
+
+        return super().create(vals)
+
+    def write(self, vals):
+        for line in self:
+            req = line.requisition_id
+            if req.create_date and req.write_date and req.write_date > req.create_date:
+                raise ValidationError(
+                    "You cannot modify lines after saving the requisition."
+                )
+        return super().write(vals)
 
 
 class ProductProduct(models.Model):
