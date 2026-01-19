@@ -257,6 +257,8 @@ class MaterialPurchaseRequisition(models.Model):
         readonly=True
     )
 
+    
+
     #read only  function
     @api.depends('state', 'requisition_line_ids.requisition_type')
     def _compute_is_locked(self):

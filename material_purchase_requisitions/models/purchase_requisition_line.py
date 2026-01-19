@@ -229,18 +229,6 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 
 # added function on jan 19 for restricting the editing after save
-    @api.model
-    def create(self, vals):
-        requisition_id = vals.get('requisition_id')
-        if requisition_id:
-            requisition = self.env['material.purchase.requisition'].browse(requisition_id)
-
-            if requisition.is_created or requisition.is_locked or requisition.state != 'draft':
-                raise ValidationError(
-                    "You cannot add lines after the requisition is locked or saved."
-                )
-
-        return super(MaterialPurchaseRequisitionLine, self).create(vals)
 
 
 
