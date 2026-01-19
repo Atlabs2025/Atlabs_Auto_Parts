@@ -243,13 +243,33 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
         return super().create(vals)
 
+    # def write(self, vals):
+    #     for line in self:
+    #         req = line.requisition_id
+    #         if req.create_date and req.write_date and req.write_date > req.create_date:
+    #             raise ValidationError(
+    #                 "You cannot modify lines after saving the requisition."
+    #             )
+    #     return super().write(vals)
+
+
+
     def write(self, vals):
+        # ✅ Always allow ONLY to_pick toggle
+        if set(vals.keys()) == {'to_pick'}:
+            return super().write(vals)
+
+        # ✅ Allow approval flow
+        if self.env.context.get('skip_line_lock'):
+            return super().write(vals)
+
         for line in self:
             req = line.requisition_id
             if req.create_date and req.write_date and req.write_date > req.create_date:
                 raise ValidationError(
-                    "You cannot modify lines after saving the requisition."
+                    "You cannot modify requisition lines after saving the requisition."
                 )
+
         return super().write(vals)
 
 
