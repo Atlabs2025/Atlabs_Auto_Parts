@@ -131,61 +131,6 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 
 
-
-
-
-
-# changed on jan 10 for duplication of product for the same car id
-#     @api.onchange('product_id')
-#     def onchange_product_id(self):
-#         for rec in self:
-#             rec.lot_id = False  # 🔥 IMPORTANT
-#
-#             if not rec.product_id:
-#                 rec.description = False
-#                 rec.uom = False
-#                 rec.part_no = False
-#                 rec.cost_price = False
-#                 rec.is_stock = False
-#                 return
-#
-#             # 🔒 DUPLICATE CHECK (ONLY FOR PURCHASE)
-#             if (
-#                     rec.requisition_type == 'purchase'
-#                     and rec.requisition_id
-#                     and rec.requisition_id.car_id
-#             ):
-#                 duplicate = self.env['material.purchase.requisition.line'].search([
-#                     ('id', '!=', rec.id),
-#                     ('product_id', '=', rec.product_id.id),
-#                     ('requisition_type', '=', 'purchase'),
-#                     ('requisition_id.car_id', '=', rec.requisition_id.car_id.id),
-#                 ], limit=1)
-#
-#                 if duplicate:
-#                     warning = {
-#                         'title': 'Duplicate Product Not Allowed',
-#                         'message': (
-#                             f"The product '{rec.product_id.display_name}' "
-#                             f"is already requested for this CAR ID "
-#                         )
-#                     }
-#
-#                     rec.product_id = False
-#                     return {'warning': warning}
-#
-#             # 🔹 NORMAL EXISTING LOGIC
-#             if rec.requisition_type == 'purchase':
-#                 rec.description = rec.product_id.display_name
-#             else:
-#                 rec.description = False
-#
-#             rec.uom = rec.product_id.uom_id.id
-#             rec.part_no = rec.product_id.default_code
-#             rec.cost_price = rec.product_id.standard_price
-#             rec.is_stock = rec.product_id.qty_available > 0
-
-
 # jan14 function
     @api.onchange('product_id')
     def onchange_product_id(self):
@@ -280,6 +225,23 @@ class MaterialPurchaseRequisitionLine(models.Model):
                 raise ValidationError(
                     "Requested quantity exceeds available stock for this Lot / Car ID."
                 )
+
+
+
+# added function on jan 19 for restricting the editing after save
+    @api.model
+    def create(self, vals):
+        requisition_id = vals.get('requisition_id')
+        if requisition_id:
+            requisition = self.env['material.purchase.requisition'].browse(requisition_id)
+
+            if requisition.is_created or requisition.is_locked or requisition.state != 'draft':
+                raise ValidationError(
+                    "You cannot add lines after the requisition is locked or saved."
+                )
+
+        return super(MaterialPurchaseRequisitionLine, self).create(vals)
+
 
 
 class ProductProduct(models.Model):

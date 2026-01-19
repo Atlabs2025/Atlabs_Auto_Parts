@@ -32,23 +32,10 @@
                 <field name="po_number"/>
                 <field name="po_date"/>
                 <field name="vendor_id"/>
-
                 <field name="received_date"/>
                 <field name="days_to_received"/>
                 <field name="issue_date"/>
 
-<!--                <field name="cost_type"/>-->
-<!--                <field name="part_id"/>-->
-<!--                <field name="qty"/>-->
-<!--                <field name="po_date"/>-->
-<!--                <field name="vendor_id"/>-->
-<!--                <field name="parts_price"/>-->
-<!--                <field name="unit_price"/>-->
-<!--                <field name="total"/>-->
-<!--                <field name="received_date"/>-->
-<!--                <field name="days_to_received"/>-->
-<!--                <field name="issue_date"/>-->
-<!--                <field name="taken_by"/>-->
             </list>
         </field>
     </record>

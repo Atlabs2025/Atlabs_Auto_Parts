@@ -250,6 +250,12 @@ class MaterialPurchaseRequisition(models.Model):
     )
 
 
+# newly added field for making readonly after save
+    is_created = fields.Boolean(
+        string="Created",
+        default=False,
+        readonly=True
+    )
 
     #read only  function
     @api.depends('state', 'requisition_line_ids.requisition_type')
@@ -285,12 +291,24 @@ class MaterialPurchaseRequisition(models.Model):
             )
 
 
+    # @api.model
+    # def create(self, vals):
+    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
+    #     vals.update({
+    #         'name': name
+    #         })
+    #     res = super(MaterialPurchaseRequisition, self).create(vals)
+    #     return res
+
     @api.model
     def create(self, vals):
         name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
+
         vals.update({
-            'name': name
-            })
+            'name': name,
+            'is_created': True,
+        })
+
         res = super(MaterialPurchaseRequisition, self).create(vals)
         return res
 
