@@ -33,7 +33,7 @@ class StockAnalysisView(models.Model):
 
 
 
-# added this in jan2 for getting lot quantity wise reccord and it will disappera if it is zero
+# jan 06 function
 #     @api.model
 #     def init(self):
 #         self._cr.execute("""
@@ -53,17 +53,22 @@ class StockAnalysisView(models.Model):
 #                                 sm.part_location,
 #
 #                                 sp.custom_requisition_id AS epr_id,
+#                                 epr.employee_id          AS employee_id,
 #                                 sp.id                    AS picking_id,
 #
 #                                 sm.available_qty,
 #                                 sml.lot_id,
 #
-#                                 -- show balance only AFTER approve
-#                                 CASE
-#                                     WHEN epr.state IN ('approve', 'partial')
-#                                         THEN mprl.stock_qty
-#                                     ELSE sml.quantity
-#                                     END                  AS lot_qty
+#                                 -- 🔥 FINAL DISPLAY QTY
+#                                 ROUND(
+#                                         (
+#                                             CASE
+#                                                 WHEN epr.state IN ('approve', 'partial')
+#                                                     THEN COALESCE(mprl.stock_qty, 0)
+#                                                 ELSE COALESCE(sml.quantity, 0)
+#                                                 END
+#                                             ):: numeric
+#                                     , 6)                 AS lot_qty
 #
 #                          FROM stock_move sm
 #                                   JOIN stock_picking sp ON sm.picking_id = sp.id
@@ -87,99 +92,113 @@ class StockAnalysisView(models.Model):
 #                            AND sml.lot_id IS NOT NULL
 #                            AND sml.epr_id = epr.id
 #
-#
-#                            -- 🔥 FINAL RULES
-#                            AND epr.state != 'partial'
-#                            AND COALESCE(mprl.stock_qty, 0) > 0
-#                            );
+#                            -- 🔒 STRICT ZERO HIDE
+#                            AND ROUND(
+#                                        (
+#                                            CASE
+#                                                WHEN epr.state IN ('approve', 'partial')
+#                                                    THEN COALESCE(mprl.stock_qty, 0)
+#                                                ELSE COALESCE(sml.quantity, 0)
+#                                                END
+#                                            ):: numeric
+#                                    , 6) > 0
+#                              );
 #                          """)
+#
+#
 
 
-
-# jan 06 function
+# jan20 function added
     @api.model
     def init(self):
         self._cr.execute("""
-                         DROP VIEW IF EXISTS stock_analysis_view CASCADE;
+            DROP VIEW IF EXISTS stock_analysis_view CASCADE;
 
-                         CREATE VIEW stock_analysis_view AS
-                         (
-                         SELECT sml.id                   AS id,
+            CREATE VIEW stock_analysis_view AS
+            (
+                SELECT
+                    sml.id AS id,
 
-                                sp.car_id,
-                                sp.vehicle_name,
-                                sp.vin_sn,
+                    sp.car_id,
+                    sp.vehicle_name,
+                    sp.vin_sn,
 
-                                sm.product_id,
-                                sp.partner_id            AS vendor_id,
-                                sm.product_uom           AS uom_id,
-                                sm.part_location,
+                    sm.product_id,
+                    sp.partner_id AS vendor_id,
+                    sm.product_uom AS uom_id,
+                    sm.part_location,
 
-                                sp.custom_requisition_id AS epr_id,
-                                epr.employee_id          AS employee_id,
-                                sp.id                    AS picking_id,
+                    sp.custom_requisition_id AS epr_id,
+                    epr.employee_id AS employee_id,
+                    sp.id AS picking_id,
 
-                                sm.available_qty,
-                                sml.lot_id,
+                    sm.available_qty,
+                    sml.lot_id,
 
-                                -- 🔥 FINAL DISPLAY QTY
-                                ROUND(
-                                        (
-                                            CASE
-                                                WHEN epr.state IN ('approve', 'partial')
-                                                    THEN COALESCE(mprl.stock_qty, 0)
-                                                ELSE COALESCE(sml.quantity, 0)
-                                                END
-                                            ):: numeric
-                                    , 6)                 AS lot_qty
+                    --  NET QTY = OUT - RETURN
+                    ROUND(
+                        (
+                            COALESCE(sml.quantity, 0)
+                            -
+                            COALESCE((
+                                SELECT SUM(rml.quantity)
+                                FROM stock_move rm
+                                JOIN stock_move_line rml
+                                    ON rml.move_id = rm.id
+                                WHERE rm.origin_returned_move_id = sm.id
+                                  AND rml.lot_id = sml.lot_id
+                            ), 0)
+                        )::numeric,
+                        6
+                    ) AS lot_qty
 
-                         FROM stock_move sm
-                                  JOIN stock_picking sp ON sm.picking_id = sp.id
-                                  JOIN stock_move_line sml ON sml.move_id = sm.id
+                FROM stock_move sm
+                JOIN stock_picking sp
+                    ON sm.picking_id = sp.id
+                JOIN stock_move_line sml
+                    ON sml.move_id = sm.id
 
-                                  JOIN material_purchase_requisition epr
-                                       ON epr.id = sp.custom_requisition_id
+                JOIN material_purchase_requisition epr
+                    ON epr.id = sp.custom_requisition_id
 
-                                  JOIN material_purchase_requisition_line mprl
-                                       ON mprl.requisition_id = epr.id
-                                           AND mprl.product_id = sm.product_id
-                                           AND mprl.lot_id = sml.lot_id
+                JOIN material_purchase_requisition_line mprl
+                    ON mprl.requisition_id = epr.id
+                    AND mprl.product_id = sm.product_id
+                    AND mprl.lot_id = sml.lot_id
 
-                                  JOIN product_product pp ON sm.product_id = pp.id
-                                  JOIN product_template pt ON pp.product_tmpl_id = pt.id
-                                  JOIN product_category pc ON pt.categ_id = pc.id
+                JOIN product_product pp ON sm.product_id = pp.id
+                JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                JOIN product_category pc ON pt.categ_id = pc.id
 
-                         WHERE sp.state = 'done'
-                           AND pc.name = 'Non Inventory'
-                           AND sp.car_id IS NOT NULL
-                           AND sml.lot_id IS NOT NULL
-                           AND sml.epr_id = epr.id
+                WHERE sp.state = 'done'
 
-                           -- 🔒 STRICT ZERO HIDE
-                           AND ROUND(
-                                       (
-                                           CASE
-                                               WHEN epr.state IN ('approve', 'partial')
-                                                   THEN COALESCE(mprl.stock_qty, 0)
-                                               ELSE COALESCE(sml.quantity, 0)
-                                               END
-                                           ):: numeric
-                                   , 6) > 0
-                             );
-                         """)
+                  --  ONLY DELIVERY (NOT RETURN PICKING)
+                  AND sm.origin_returned_move_id IS NULL
 
+                  --  NON INVENTORY
+                  AND pc.name = 'Non Inventory'
 
+                  --  REQUIRED
+                  AND sp.car_id IS NOT NULL
+                  AND sml.lot_id IS NOT NULL
+                  AND sml.epr_id = epr.id
 
+                  -- 🔒 HIDE ZERO / NEGATIVE QTY
+                  AND (
+                      COALESCE(sml.quantity, 0)
+                      -
+                      COALESCE((
+                          SELECT SUM(rml.quantity)
+                          FROM stock_move rm
+                          JOIN stock_move_line rml
+                              ON rml.move_id = rm.id
+                          WHERE rm.origin_returned_move_id = sm.id
+                            AND rml.lot_id = sml.lot_id
+                      ), 0)
+                  ) > 0
+            );
+        """)
 
-
-# use this code  when client complain jan 03 removed
-                         #   -- 🔥 HIDE ONLY WHEN APPROVED AND STOCK ZERO
-                         #   AND NOT (
-                         #     epr.state IN ('approve', 'partial')
-                         #         AND mprl.stock_qty = 0
-                         #     )
-                         #     );
-                         # """)
 
 
 
