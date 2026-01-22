@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from odoo.exceptions import UserError, ValidationError
 from odoo.exceptions import UserError
 from odoo.tools import float_compare
@@ -70,12 +70,29 @@ class MaterialPurchaseRequisition(models.Model):
         # tracking=True,
         tracking=True
     )
+    # request_date = fields.Date(
+    #     string='Requisition Date',
+    #     # default=fields.Date.today(),
+    #     default=lambda self: fields.Date.context_today(self),
+    #     required=True,
+    # )
+
+    def _default_request_date(self):
+        # current datetime in user's timezone
+        now = fields.Datetime.context_timestamp(self, fields.Datetime.now())
+
+        # if after 6 PM (18:00)
+        if now.hour >= 18:
+            return (now.date() + timedelta(days=1))
+        return now.date()
+
     request_date = fields.Date(
         string='Requisition Date',
-        # default=fields.Date.today(),
-        default=lambda self: fields.Date.context_today(self),
+        default=_default_request_date,
         required=True,
     )
+
+
     department_id = fields.Many2one(
         'hr.department',
         string='Department',
