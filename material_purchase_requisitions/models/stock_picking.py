@@ -234,10 +234,10 @@ class StockMoveLine(models.Model):
     car_id = fields.Many2one('vehicle.details', string="Car ID", store=True)
 
 # only for local purpose
-class StockReturnPicking(models.TransientModel):
-    _inherit = 'stock.return.picking'
-
-    picking_type_code = fields.Selection(
-        related='picking_id.picking_type_id.code',
-        store=False
-    )
+# class StockReturnPicking(models.TransientModel):
+#     _inherit = 'stock.return.picking'
+#
+#     picking_type_code = fields.Selection(
+#         related='picking_id.picking_type_id.code',
+#         store=False
+#     )

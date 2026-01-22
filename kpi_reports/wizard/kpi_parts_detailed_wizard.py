@@ -11,7 +11,10 @@ class KpiPartsDetailedWizard(models.TransientModel):
         ('parts_arranged_above_3_days', 'Parts Arranged > 3 Days'),
         ('total_parts_purchased', 'Total Parts Purchased'),
         ('total_parts_received', 'Total Parts Received'),
+        ('total_parts_received_percentage', 'Total Parts Received %'),
         ('total_parts_issued', 'Total Parts Issued'),
+        ('total_parts_issued_percentage', 'Total Parts Issued %'),
+        ('total_parts_available', 'Total Parts Available'),
         ('utilization_percentage', 'Utilization %'),
         ('returned_parts', 'Returned Parts'),
         ('genuine_parts_spend', 'Genuine Parts Spend %'),
@@ -59,6 +62,31 @@ class KpiPartsDetailedWizard(models.TransientModel):
         elif self.kpi_point == 'total_parts_received':
             domain = [
                 ('received_date', '!=', False),
+            ]
+
+        elif self.kpi_point == 'total_parts_received':
+            domain = [
+                ('received_date', '!=', False),
+                ('received_qty', '>', 0),
+            ]
+
+        elif self.kpi_point == 'total_parts_received_percentage':
+            domain = [
+                ('requested_qty', '>', 0),
+            ]
+
+        elif self.kpi_point == 'total_parts_issued':
+            domain = [
+                ('issue_date', '!=', False),
+            ]
+        elif self.kpi_point == 'total_parts_issued_percentage':
+            domain = [
+                ('issue_date', '!=', False),
+            ]
+
+        elif self.kpi_point == 'total_parts_available':
+            domain = [
+                ('total_parts_available', '>', 0),
             ]
 
         return {
@@ -124,9 +152,42 @@ class KpiPartsDetailedWizard(models.TransientModel):
         elif self.kpi_point == 'total_parts_received':
             domain = [
                 ('received_date', '!=', False),
+                ('received_qty', '>', 0),
             ]
             sheet_name = 'Total Parts Received'
             file_name = 'Total_Parts_Received.xlsx'
+
+
+        elif self.kpi_point == 'total_parts_received_percentage':
+            domain = [
+                ('requested_qty', '>', 0),
+            ]
+            sheet_name = 'Total Parts Received %'
+            file_name = 'Total_Parts_Received_Percentage.xlsx'
+
+
+        elif self.kpi_point == 'total_parts_issued':
+            domain = [
+                ('issue_date', '!=', False),
+            ]
+            sheet_name = 'Total Parts Issued'
+            file_name = 'Total_Parts_Issued.xlsx'
+
+
+        elif self.kpi_point == 'total_parts_issued_percentage':
+            domain = [
+                ('issue_date', '!=', False),
+            ]
+            sheet_name = 'Total Parts Issued %'
+            file_name = 'Total_Parts_Issued_Percentage.xlsx'
+
+        elif self.kpi_point == 'total_parts_available':
+            domain = [
+                ('total_parts_available', '>', 0),
+            ]
+            sheet_name = 'Total Parts Available'
+            file_name = 'Total_Parts_Available.xlsx'
+
 
 
         else:
@@ -151,6 +212,10 @@ class KpiPartsDetailedWizard(models.TransientModel):
         text_fmt = workbook.add_format({'border': 1})
         num_fmt = workbook.add_format({'border': 1, 'num_format': '#,##0.00'})
         int_fmt = workbook.add_format({'border': 1})
+        percent_fmt = workbook.add_format({
+            'border': 1,
+            'num_format': '0.00"%"'
+        })
 
         # Headers (MATCH VIEW)
         headers = [
@@ -159,12 +224,12 @@ class KpiPartsDetailedWizard(models.TransientModel):
             'Product', 'Parts Price', 'Requested Qty',
             'Received Qty', 'Analytic Account',
             'PO Number', 'PO Date', 'Vendor',
-            'Received Date', 'Days to Received', 'Issue Date'
+            'Received Date', 'Days to Received', 'Issue Date','Total Parts Received %','Total Parts Issued %','Total Parts Available',
         ]
 
         for col, header in enumerate(headers):
             sheet.write(0, col, header, header_fmt)
-            sheet.set_column(col, col, 18)
+            sheet.set_column(col, col, 21)
 
         # Data
         row = 1
@@ -190,6 +255,9 @@ class KpiPartsDetailedWizard(models.TransientModel):
             sheet.write(row, 16, str(rec.received_date or ''), text_fmt)
             sheet.write(row, 17, rec.days_to_received or 0, int_fmt)
             sheet.write(row, 18, str(rec.issue_date or ''), text_fmt)
+            sheet.write(row, 19, rec.total_parts_received_percentage or 0.0, percent_fmt)
+            sheet.write(row, 20, rec.total_parts_issued_percentage or 0.0, percent_fmt)
+            sheet.write(row, 21, rec.total_parts_available or 0, int_fmt)
 
             row += 1
             sn += 1
@@ -198,7 +266,7 @@ class KpiPartsDetailedWizard(models.TransientModel):
         output.seek(0)
 
         # --------------------------------
-        # ATTACHMENT (YOUR STYLE ✅)
+        # ATTACHMENT (YOUR STYLE )
         # --------------------------------
         attachment = self.env['ir.attachment'].create({
             'name': file_name,

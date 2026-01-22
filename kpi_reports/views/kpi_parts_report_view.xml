@@ -35,6 +35,12 @@
                 <field name="received_date"/>
                 <field name="days_to_received"/>
                 <field name="issue_date"/>
+                <field name="total_parts_received_percentage" widget="percentage"/>
+                <field name="total_parts_issued_percentage" widget="percentage"/>
+                <field name="total_parts_available"/>
+
+
+
 
             </list>
         </field>
