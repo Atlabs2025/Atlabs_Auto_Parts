@@ -88,6 +88,11 @@ class KpiPartsDetailedWizard(models.TransientModel):
             domain = [
                 ('total_parts_available', '>', 0),
             ]
+        elif self.kpi_point == 'utilization_percentage':
+            domain = [
+                ('received_qty', '>', 0),
+                ('utilization_percentage', '>', 0),
+            ]
 
         return {
             'type': 'ir.actions.act_window',
@@ -188,6 +193,14 @@ class KpiPartsDetailedWizard(models.TransientModel):
             sheet_name = 'Total Parts Available'
             file_name = 'Total_Parts_Available.xlsx'
 
+        elif self.kpi_point == 'utilization_percentage':
+            domain = [
+                ('received_qty', '>', 0),
+                ('utilization_percentage', '>', 0),
+            ]
+            sheet_name = 'Utilization %'
+            file_name = 'Utilization %.xlsx'
+
 
 
         else:
@@ -224,12 +237,12 @@ class KpiPartsDetailedWizard(models.TransientModel):
             'Product', 'Parts Price', 'Requested Qty',
             'Received Qty', 'Analytic Account',
             'PO Number', 'PO Date', 'Vendor',
-            'Received Date', 'Days to Received', 'Issue Date','Total Parts Received %','Total Parts Issued %','Total Parts Available',
+            'Received Date', 'Days to Received', 'Issue Date','Total Parts Received %','Total Parts Issued %','Total Parts Available','Utilization %',
         ]
 
         for col, header in enumerate(headers):
             sheet.write(0, col, header, header_fmt)
-            sheet.set_column(col, col, 21)
+            sheet.set_column(col, col, 22)
 
         # Data
         row = 1
@@ -258,6 +271,7 @@ class KpiPartsDetailedWizard(models.TransientModel):
             sheet.write(row, 19, rec.total_parts_received_percentage or 0.0, percent_fmt)
             sheet.write(row, 20, rec.total_parts_issued_percentage or 0.0, percent_fmt)
             sheet.write(row, 21, rec.total_parts_available or 0, int_fmt)
+            sheet.write(row, 22, rec.utilization_percentage or 0.0, percent_fmt )
 
             row += 1
             sn += 1

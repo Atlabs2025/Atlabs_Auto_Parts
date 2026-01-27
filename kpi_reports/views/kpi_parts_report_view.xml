@@ -38,6 +38,10 @@
                 <field name="total_parts_received_percentage" widget="percentage"/>
                 <field name="total_parts_issued_percentage" widget="percentage"/>
                 <field name="total_parts_available"/>
+                <field name="utilization_percentage"  widget="percentage"/>
+
+
+
 
 
 
