@@ -218,6 +218,7 @@ class RFQRequest(models.Model):
                         'product_qty': line.product_qty,
                         'price_unit': 0.0,
                         'date_planned': fields.Date.today(),
+                        'analytic_account_id' : line.analytic_account_id.id,
                     }))
 
                 po_vals = {
@@ -257,6 +258,8 @@ class RFQRequest(models.Model):
                             'product_qty': line.product_qty,
                             'price_unit': 0.0,
                             'date_planned': fields.Date.today(),
+                            'analytic_account_id': line.analytic_account_id.id,
+
                         }))
 
                 if not po_line_vals:
@@ -332,6 +335,12 @@ class RFQManagementLine(models.Model):
         string="Supplier")
     # domain = [('supplier_rank', '>', 0)]
 
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account',
+        string='Nature Of Cost',
+        copy=True, required=True
+    )
+
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
@@ -371,7 +380,6 @@ class PurchaseOrder(models.Model):
                 po.material_requisition_id.po_id = po.id
 
         return res
-
 
 
 
