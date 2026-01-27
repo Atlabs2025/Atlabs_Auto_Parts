@@ -367,6 +367,7 @@ class MaterialPurchaseRequisition(models.Model):
                 'price_unit': line.cost_price or 0.0,
                 'part_type': line.part_type or False,
                 'part_no': line.part_no or False,
+                'analytic_account_id': line.analytic_account_id.id,
 
             }))
 
