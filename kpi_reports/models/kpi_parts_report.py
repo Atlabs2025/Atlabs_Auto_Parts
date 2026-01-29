@@ -80,134 +80,7 @@ class KpiPartsReport(models.Model):
 
 
 
-    # def init(self):
-    #     tools.drop_view_if_exists(self.env.cr, self._table)
-    #
-    #     self.env.cr.execute("""
-    #         CREATE VIEW kpi_parts_report AS (
-    #             SELECT
-    #                 row_number() OVER () AS id,
-    #
-    #                 -- Requisition
-    #                 epr.id                      AS epr_id,
-    #                 epr.car_id                  AS car_id,
-    #                 vd.vin_sn                   AS vin_sn,
-    #                 epr.department_id           AS department_id,
-    #                 epr.employee_id             AS employee_id,
-    #                 epr.request_date            AS request_date,
-    #
-    #                 -- Product
-    #                 eprl.part_type              AS part_type,
-    #                 eprl.product_id             AS product_id,
-    #                 eprl.qty                    AS requested_qty,
-    #                 eprl.analytic_account_id    AS analytic_account_id,
-    #
-    #                 -- PO
-    #                 po.name                     AS po_number,
-    #                 po.date_order               AS po_date,
-    #                 po.partner_id               AS vendor_id,
-    #                 pol.price_unit              AS parts_price,
-    #
-    #                 -- GRN received date
-    #                 grn.date_done::date         AS received_date,
-    #
-    #                 -- Received Quantity
-    #                 COALESCE(recv.received_qty, 0) AS received_qty,
-    #
-    #                 -- Days to received
-    #                 CASE
-    #                     WHEN grn.date_done IS NOT NULL
-    #                          AND epr.request_date IS NOT NULL
-    #                     THEN (grn.date_done::date - epr.request_date)
-    #                     ELSE NULL
-    #                 END AS days_to_received,
-    #
-    #                 --  TOTAL PARTS RECEIVED % (RATIO 0–1)
-    #                 CASE
-    #                     WHEN eprl.qty > 0
-    #                     THEN ROUND(
-    #                         COALESCE(recv.received_qty, 0)::numeric
-    #                         / eprl.qty::numeric,
-    #                         4
-    #                     )
-    #                     ELSE 0
-    #                 END AS total_parts_received_percentage,
-    #
-    #                 -- Issue date
-    #                 issue_ml.issue_date         AS issue_date,
-    #
-    #                 --  Issued Quantity
-    #                 COALESCE(issue_ml.issued_qty, 0) AS issued_qty,
-    #
-    #                 --  TOTAL PARTS ISSUED % (RATIO 0–1, NEVER > 1)
-    #                 CASE
-    #                     WHEN COALESCE(recv.received_qty, 0) > 0
-    #                     THEN ROUND(
-    #                         LEAST(
-    #                             COALESCE(issue_ml.issued_qty, 0),
-    #                             COALESCE(recv.received_qty, 0)
-    #                         )::numeric
-    #                         / recv.received_qty::numeric,
-    #                         4
-    #                     )
-    #                     ELSE 0
-    #                 END AS total_parts_issued_percentage
-    #
-    #             FROM material_purchase_requisition epr
-    #
-    #             LEFT JOIN vehicle_details vd
-    #                 ON vd.id = epr.car_id
-    #
-    #             LEFT JOIN material_purchase_requisition_line eprl
-    #                 ON eprl.requisition_id = epr.id
-    #
-    #             LEFT JOIN purchase_order po
-    #                 ON po.custom_requisition_id = epr.id
-    #
-    #             LEFT JOIN purchase_order_line pol
-    #                 ON pol.order_id = po.id
-    #                AND pol.product_id = eprl.product_id
-    #
-    #             LEFT JOIN stock_move sm
-    #                 ON sm.purchase_line_id = pol.id
-    #
-    #             LEFT JOIN stock_picking grn
-    #                 ON grn.id = sm.picking_id
-    #                AND grn.state = 'done'
-    #                AND grn.picking_type_id IN (
-    #                     SELECT id FROM stock_picking_type WHERE code = 'incoming'
-    #                )
-    #
-    #             -- 🔹 Received Qty
-    #             LEFT JOIN LATERAL (
-    #                 SELECT
-    #                     SUM(sml.quantity) AS received_qty
-    #                 FROM stock_move_line sml
-    #                 JOIN stock_move sm3 ON sm3.id = sml.move_id
-    #                 JOIN stock_picking sp3 ON sp3.id = sm3.picking_id
-    #                 JOIN stock_picking_type spt3 ON spt3.id = sp3.picking_type_id
-    #                 WHERE
-    #                     spt3.code = 'incoming'
-    #                     AND sp3.state = 'done'
-    #                     AND sm3.purchase_line_id = pol.id
-    #             ) recv ON TRUE
-    #
-    #             -- 🔹 Issued Qty + Issue Date
-    #             LEFT JOIN LATERAL (
-    #                 SELECT
-    #                     MIN(sml.date::date) AS issue_date,
-    #                     SUM(sml.quantity)   AS issued_qty
-    #                 FROM stock_move_line sml
-    #                 JOIN stock_move sm2 ON sm2.id = sml.move_id
-    #                 JOIN stock_picking sp2 ON sp2.id = sm2.picking_id
-    #                 JOIN stock_picking_type spt2 ON spt2.id = sp2.picking_type_id
-    #                 WHERE
-    #                     spt2.code = 'outgoing'
-    #                     AND sm2.product_id = eprl.product_id
-    #                     AND sp2.state = 'done'
-    #             ) issue_ml ON TRUE
-    #         )
-    #     """)
+
 
     # def init(self):
     #     tools.drop_view_if_exists(self.env.cr, self._table)
@@ -342,6 +215,154 @@ class KpiPartsReport(models.Model):
     #         )
     #     """)
 
+# commented on jan 29
+    # def init(self):
+    #     tools.drop_view_if_exists(self.env.cr, self._table)
+    #
+    #     self.env.cr.execute("""
+    #         CREATE VIEW kpi_parts_report AS (
+    #             SELECT
+    #                 row_number() OVER () AS id,
+    #
+    #                 -- Requisition
+    #                 epr.id                    AS epr_id,
+    #                 epr.car_id                AS car_id,
+    #                 vd.vin_sn                 AS vin_sn,
+    #                 epr.department_id         AS department_id,
+    #                 epr.employee_id           AS employee_id,
+    #                 epr.request_date          AS request_date,
+    #
+    #                 -- Product
+    #                 eprl.part_type            AS part_type,
+    #                 eprl.product_id           AS product_id,
+    #                 eprl.qty                  AS requested_qty,
+    #                 eprl.analytic_account_id  AS analytic_account_id,
+    #
+    #                 -- PO
+    #                 po.name                   AS po_number,
+    #                 po.date_order             AS po_date,
+    #                 po.partner_id             AS vendor_id,
+    #                 pol.price_unit            AS parts_price,
+    #
+    #                 -- GRN
+    #                 grn.date_done::date       AS received_date,
+    #
+    #                 -- Received Qty
+    #                 COALESCE(recv.received_qty, 0) AS received_qty,
+    #
+    #                 -- Days to Received
+    #                 CASE
+    #                     WHEN grn.date_done IS NOT NULL
+    #                      AND epr.request_date IS NOT NULL
+    #                     THEN (grn.date_done::date - epr.request_date)
+    #                     ELSE NULL
+    #                 END AS days_to_received,
+    #
+    #                 -- TOTAL PARTS RECEIVED %
+    #                 CASE
+    #                     WHEN eprl.qty > 0
+    #                     THEN ROUND(
+    #                         COALESCE(recv.received_qty, 0)::numeric
+    #                         / eprl.qty::numeric,
+    #                         4
+    #                     )
+    #                     ELSE 0
+    #                 END AS total_parts_received_percentage,
+    #
+    #                 -- Issue
+    #                 issue_ml.issue_date       AS issue_date,
+    #                 COALESCE(issue_ml.issued_qty, 0) AS issued_qty,
+    #
+    #                 -- TOTAL PARTS ISSUED %
+    #                 CASE
+    #                     WHEN COALESCE(recv.received_qty, 0) > 0
+    #                     THEN ROUND(
+    #                         LEAST(
+    #                             COALESCE(issue_ml.issued_qty, 0),
+    #                             COALESCE(recv.received_qty, 0)
+    #                         )::numeric
+    #                         / recv.received_qty::numeric,
+    #                         4
+    #                     )
+    #                     ELSE 0
+    #                 END AS total_parts_issued_percentage,
+    #
+    #                 -- TOTAL PARTS AVAILABLE
+    #                 ROUND(
+    #                     COALESCE(recv.received_qty, 0)
+    #                     - COALESCE(issue_ml.issued_qty, 0)
+    #                 ) AS total_parts_available,
+    #
+    #                 --  UTILIZATION %
+    #                 CASE
+    #                     WHEN COALESCE(recv.received_qty, 0) > 0
+    #                     THEN ROUND(
+    #                         LEAST(
+    #                             COALESCE(issue_ml.issued_qty, 0),
+    #                             COALESCE(recv.received_qty, 0)
+    #                         )::numeric
+    #                         / recv.received_qty::numeric,
+    #                         4
+    #                     )
+    #                     ELSE 0
+    #                 END AS utilization_percentage
+    #
+    #             FROM material_purchase_requisition epr
+    #
+    #             LEFT JOIN vehicle_details vd
+    #                 ON vd.id = epr.car_id
+    #
+    #             LEFT JOIN material_purchase_requisition_line eprl
+    #                 ON eprl.requisition_id = epr.id
+    #
+    #             LEFT JOIN purchase_order po
+    #                 ON po.custom_requisition_id = epr.id
+    #
+    #             LEFT JOIN purchase_order_line pol
+    #                 ON pol.order_id = po.id
+    #                AND pol.product_id = eprl.product_id
+    #
+    #             LEFT JOIN stock_move sm
+    #                 ON sm.purchase_line_id = pol.id
+    #
+    #             LEFT JOIN stock_picking grn
+    #                 ON grn.id = sm.picking_id
+    #                AND grn.state = 'done'
+    #                AND grn.picking_type_id IN (
+    #                     SELECT id FROM stock_picking_type WHERE code = 'incoming'
+    #                )
+    #
+    #             -- 🔹 Received Qty
+    #             LEFT JOIN LATERAL (
+    #                 SELECT
+    #                     SUM(sml.quantity) AS received_qty
+    #                 FROM stock_move_line sml
+    #                 JOIN stock_move sm3 ON sm3.id = sml.move_id
+    #                 JOIN stock_picking sp3 ON sp3.id = sm3.picking_id
+    #                 JOIN stock_picking_type spt3 ON spt3.id = sp3.picking_type_id
+    #                 WHERE
+    #                     spt3.code = 'incoming'
+    #                     AND sp3.state = 'done'
+    #                     AND sm3.purchase_line_id = pol.id
+    #             ) recv ON TRUE
+    #
+    #             -- 🔹 Issued Qty
+    #             LEFT JOIN LATERAL (
+    #                 SELECT
+    #                     MIN(sml.date::date) AS issue_date,
+    #                     SUM(sml.quantity)   AS issued_qty
+    #                 FROM stock_move_line sml
+    #                 JOIN stock_move sm2 ON sm2.id = sml.move_id
+    #                 JOIN stock_picking sp2 ON sp2.id = sm2.picking_id
+    #                 JOIN stock_picking_type spt2 ON spt2.id = sp2.picking_type_id
+    #                 WHERE
+    #                     spt2.code = 'outgoing'
+    #                     AND sm2.product_id = eprl.product_id
+    #                     AND sp2.state = 'done'
+    #             ) issue_ml ON TRUE
+    #         )
+    #     """)
+# jan 29 added code(coming duplicate records is a doubt), use the above code if needed
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
 
@@ -350,33 +371,33 @@ class KpiPartsReport(models.Model):
                 SELECT
                     row_number() OVER () AS id,
 
-                    -- Requisition
-                    epr.id                    AS epr_id,
-                    epr.car_id                AS car_id,
-                    vd.vin_sn                 AS vin_sn,
-                    epr.department_id         AS department_id,
-                    epr.employee_id           AS employee_id,
-                    epr.request_date          AS request_date,
+                    -- 🔹 Requisition
+                    epr.id                   AS epr_id,
+                    epr.car_id               AS car_id,
+                    vd.vin_sn                AS vin_sn,
+                    epr.department_id        AS department_id,
+                    epr.employee_id          AS employee_id,
+                    epr.request_date         AS request_date,
 
-                    -- Product
-                    eprl.part_type            AS part_type,
-                    eprl.product_id           AS product_id,
-                    eprl.qty                  AS requested_qty,
-                    eprl.analytic_account_id  AS analytic_account_id,
+                    -- 🔹 Product
+                    eprl.part_type           AS part_type,
+                    eprl.product_id          AS product_id,
+                    eprl.qty                 AS requested_qty,
+                    eprl.analytic_account_id AS analytic_account_id,
 
-                    -- PO
-                    po.name                   AS po_number,
-                    po.date_order             AS po_date,
-                    po.partner_id             AS vendor_id,
-                    pol.price_unit            AS parts_price,
+                    -- 🔹 Purchase Order
+                    po.name                  AS po_number,
+                    po.date_order            AS po_date,
+                    po.partner_id            AS vendor_id,
+                    pol.price_unit           AS parts_price,
 
-                    -- GRN
-                    grn.date_done::date       AS received_date,
+                    -- 🔹 GRN (Incoming Picking)
+                    grn.date_done::date      AS received_date,
 
-                    -- Received Qty
+                    -- 🔹 Received Qty (NO purchase_line_id dependency)
                     COALESCE(recv.received_qty, 0) AS received_qty,
 
-                    -- Days to Received
+                    -- 🔹 Days to Receive
                     CASE
                         WHEN grn.date_done IS NOT NULL
                          AND epr.request_date IS NOT NULL
@@ -384,7 +405,7 @@ class KpiPartsReport(models.Model):
                         ELSE NULL
                     END AS days_to_received,
 
-                    -- TOTAL PARTS RECEIVED %
+                    -- 🔹 Total Parts Received %
                     CASE
                         WHEN eprl.qty > 0
                         THEN ROUND(
@@ -395,16 +416,16 @@ class KpiPartsReport(models.Model):
                         ELSE 0
                     END AS total_parts_received_percentage,
 
-                    -- Issue
-                    issue_ml.issue_date       AS issue_date,
-                    COALESCE(issue_ml.issued_qty, 0) AS issued_qty,
+                    -- 🔹 Issue (Outgoing)
+                    issue.issue_date,
+                    COALESCE(issue.issued_qty, 0) AS issued_qty,
 
-                    -- TOTAL PARTS ISSUED %
+                    -- 🔹 Total Parts Issued %
                     CASE
                         WHEN COALESCE(recv.received_qty, 0) > 0
                         THEN ROUND(
                             LEAST(
-                                COALESCE(issue_ml.issued_qty, 0),
+                                COALESCE(issue.issued_qty, 0),
                                 COALESCE(recv.received_qty, 0)
                             )::numeric
                             / recv.received_qty::numeric,
@@ -413,18 +434,18 @@ class KpiPartsReport(models.Model):
                         ELSE 0
                     END AS total_parts_issued_percentage,
 
-                    -- TOTAL PARTS AVAILABLE
+                    -- 🔹 Available Parts
                     ROUND(
                         COALESCE(recv.received_qty, 0)
-                        - COALESCE(issue_ml.issued_qty, 0)
+                        - COALESCE(issue.issued_qty, 0)
                     ) AS total_parts_available,
 
-                    -- ✅ UTILIZATION %
+                    -- ✅ Utilization %
                     CASE
                         WHEN COALESCE(recv.received_qty, 0) > 0
                         THEN ROUND(
                             LEAST(
-                                COALESCE(issue_ml.issued_qty, 0),
+                                COALESCE(issue.issued_qty, 0),
                                 COALESCE(recv.received_qty, 0)
                             )::numeric
                             / recv.received_qty::numeric,
@@ -448,31 +469,26 @@ class KpiPartsReport(models.Model):
                     ON pol.order_id = po.id
                    AND pol.product_id = eprl.product_id
 
-                LEFT JOIN stock_move sm
-                    ON sm.purchase_line_id = pol.id
-
+                -- 🔹 Incoming Picking (GRN)
                 LEFT JOIN stock_picking grn
-                    ON grn.id = sm.picking_id
+                    ON grn.origin = po.name
                    AND grn.state = 'done'
                    AND grn.picking_type_id IN (
                         SELECT id FROM stock_picking_type WHERE code = 'incoming'
                    )
 
-                -- 🔹 Received Qty
+                -- 🔹 Received Quantity
                 LEFT JOIN LATERAL (
                     SELECT
                         SUM(sml.quantity) AS received_qty
                     FROM stock_move_line sml
-                    JOIN stock_move sm3 ON sm3.id = sml.move_id
-                    JOIN stock_picking sp3 ON sp3.id = sm3.picking_id
-                    JOIN stock_picking_type spt3 ON spt3.id = sp3.picking_type_id
+                    JOIN stock_move sm ON sm.id = sml.move_id
                     WHERE
-                        spt3.code = 'incoming'
-                        AND sp3.state = 'done'
-                        AND sm3.purchase_line_id = pol.id
+                        sm.picking_id = grn.id
+                        AND sm.product_id = eprl.product_id
                 ) recv ON TRUE
 
-                -- 🔹 Issued Qty
+                -- 🔹 Issued Quantity
                 LEFT JOIN LATERAL (
                     SELECT
                         MIN(sml.date::date) AS issue_date,
@@ -483,11 +499,14 @@ class KpiPartsReport(models.Model):
                     JOIN stock_picking_type spt2 ON spt2.id = sp2.picking_type_id
                     WHERE
                         spt2.code = 'outgoing'
-                        AND sm2.product_id = eprl.product_id
                         AND sp2.state = 'done'
-                ) issue_ml ON TRUE
+                        AND sm2.product_id = eprl.product_id
+                ) issue ON TRUE
             )
         """)
+
+
+
 
     def action_print_xlsx(self):
         output = io.BytesIO()

@@ -40,15 +40,35 @@
                 <field name="total_parts_available"/>
                 <field name="utilization_percentage"  widget="percentage"/>
 
-
-
-
-
-
-
             </list>
         </field>
     </record>
+
+
+    <record id="view_kpi_parts_report_search" model="ir.ui.view">
+        <field name="name">kpi.parts.report.search</field>
+        <field name="model">kpi.parts.report</field>
+        <field name="arch" type="xml">
+            <search string="Search KPI Parts Report">
+
+                <!-- 🔹 Quick Search Fields -->
+                <field name="epr_id"/>
+                <field name="car_id"/>
+                <field name="product_id"/>
+                <field name="vendor_id"/>
+                <field name="department_id"/>
+
+                <!-- 🔹 Filters -->
+                <filter string="With Requisition"
+                        name="filter_epr"
+                        domain="[('epr_id','!=',False)]"/>
+
+                <!-- 🔹 Group By -->
+
+            </search>
+        </field>
+    </record>
+
 
     <record id="action_kpi_parts_report" model="ir.actions.act_window">
         <field name="name">KPI Parts Report</field>
