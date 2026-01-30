@@ -507,6 +507,143 @@ class KpiPartsReport(models.Model):
 
 
 # test code on 29
+#     def init(self):
+#         tools.drop_view_if_exists(self.env.cr, self._table)
+#
+#         self.env.cr.execute("""
+#             CREATE VIEW kpi_parts_report AS (
+#                 SELECT
+#                     row_number() OVER () AS id,
+#
+#                     /* ================= REQUISITION ================= */
+#                     epr.id                    AS epr_id,
+#                     epr.car_id                AS car_id,
+#                     vd.vin_sn                 AS vin_sn,
+#                     epr.department_id         AS department_id,
+#                     epr.employee_id           AS employee_id,
+#                     epr.request_date          AS request_date,
+#
+#                     /* ================= PRODUCT ================= */
+#                     eprl.part_type            AS part_type,
+#                     eprl.product_id           AS product_id,
+#                     eprl.qty                  AS requested_qty,
+#                     eprl.analytic_account_id  AS analytic_account_id,
+#
+#                     /* ================= PURCHASE ORDER ================= */
+#                     po.name                   AS po_number,
+#                     po.date_order             AS po_date,
+#                     po.partner_id             AS vendor_id,
+#                     pol.price_unit            AS parts_price,
+#
+#                     /* ================= RECEIPT (GRN) ================= */
+#                     recv.received_date,
+#                     COALESCE(recv.received_qty, 0) AS received_qty,
+#
+#                     /* ================= DAYS TO RECEIVE ================= */
+#                     CASE
+#                         WHEN recv.received_date IS NOT NULL
+#                              AND epr.request_date IS NOT NULL
+#                         THEN (recv.received_date - epr.request_date)
+#                         ELSE NULL
+#                     END AS days_to_received,
+#
+#                     /* ================= RECEIVED % ================= */
+#                     CASE
+#                         WHEN eprl.qty > 0
+#                         THEN ROUND(
+#                             COALESCE(recv.received_qty, 0)::numeric
+#                             / eprl.qty::numeric,
+#                             4
+#                         )
+#                         ELSE 0
+#                     END AS total_parts_received_percentage,
+#
+#                     /* ================= ISSUE ================= */
+#                     issue.issue_date,
+#                     COALESCE(issue.issued_qty, 0) AS issued_qty,
+#
+#                     /* ================= ISSUED % ================= */
+#                     CASE
+#                         WHEN COALESCE(recv.received_qty, 0) > 0
+#                         THEN ROUND(
+#                             LEAST(
+#                                 COALESCE(issue.issued_qty, 0),
+#                                 COALESCE(recv.received_qty, 0)
+#                             )::numeric
+#                             / recv.received_qty::numeric,
+#                             4
+#                         )
+#                         ELSE 0
+#                     END AS total_parts_issued_percentage,
+#
+#                     /* ================= AVAILABLE ================= */
+#                     ROUND(
+#                         COALESCE(recv.received_qty, 0)
+#                         - COALESCE(issue.issued_qty, 0)
+#                     ) AS total_parts_available,
+#
+#                     /* ================= UTILIZATION % ================= */
+#                     CASE
+#                         WHEN COALESCE(recv.received_qty, 0) > 0
+#                         THEN ROUND(
+#                             LEAST(
+#                                 COALESCE(issue.issued_qty, 0),
+#                                 COALESCE(recv.received_qty, 0)
+#                             )::numeric
+#                             / recv.received_qty::numeric,
+#                             4
+#                         )
+#                         ELSE 0
+#                     END AS utilization_percentage
+#
+#                 FROM material_purchase_requisition epr
+#
+#                 LEFT JOIN vehicle_details vd
+#                     ON vd.id = epr.car_id
+#
+#                 LEFT JOIN material_purchase_requisition_line eprl
+#                     ON eprl.requisition_id = epr.id
+#
+#                 LEFT JOIN purchase_order po
+#                     ON po.custom_requisition_id = epr.id
+#
+#                 LEFT JOIN purchase_order_line pol
+#                     ON pol.order_id = po.id
+#                    AND pol.product_id = eprl.product_id
+#
+#                 /* ================= RECEIVED (AGGREGATED) ================= */
+#                 LEFT JOIN LATERAL (
+#                     SELECT
+#                         MIN(sp.date_done::date) AS received_date,
+#                         SUM(sml.quantity)       AS received_qty
+#                     FROM stock_move_line sml
+#                     JOIN stock_move sm   ON sm.id = sml.move_id
+#                     JOIN stock_picking sp ON sp.id = sm.picking_id
+#                     JOIN stock_picking_type spt ON spt.id = sp.picking_type_id
+#                     WHERE
+#                         spt.code = 'incoming'
+#                         AND sp.state = 'done'
+#                         AND sm.product_id = eprl.product_id
+#                         AND sp.origin = po.name
+#                 ) recv ON TRUE
+#
+#                 /* ================= ISSUED (AGGREGATED) ================= */
+#                 LEFT JOIN LATERAL (
+#                     SELECT
+#                         MIN(sp2.date_done::date) AS issue_date,
+#                         SUM(sml2.quantity)       AS issued_qty
+#                     FROM stock_move_line sml2
+#                     JOIN stock_move sm2   ON sm2.id = sml2.move_id
+#                     JOIN stock_picking sp2 ON sp2.id = sm2.picking_id
+#                     JOIN stock_picking_type spt2 ON spt2.id = sp2.picking_type_id
+#                     WHERE
+#                         spt2.code = 'outgoing'
+#                         AND sp2.state = 'done'
+#                         AND sm2.product_id = eprl.product_id
+#                 ) issue ON TRUE
+#             )
+#         """)
+
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
 
@@ -535,7 +672,7 @@ class KpiPartsReport(models.Model):
                     po.partner_id             AS vendor_id,
                     pol.price_unit            AS parts_price,
 
-                    /* ================= RECEIPT (GRN) ================= */
+                    /* ================= RECEIPT (ONLY IF PO EXISTS) ================= */
                     recv.received_date,
                     COALESCE(recv.received_qty, 0) AS received_qty,
 
@@ -604,14 +741,15 @@ class KpiPartsReport(models.Model):
                 LEFT JOIN material_purchase_requisition_line eprl
                     ON eprl.requisition_id = epr.id
 
-                LEFT JOIN purchase_order po
-                    ON po.custom_requisition_id = epr.id
-
+                /* 🔥 PO JOIN — PRODUCT LEVEL */
                 LEFT JOIN purchase_order_line pol
-                    ON pol.order_id = po.id
-                   AND pol.product_id = eprl.product_id
+                    ON pol.product_id = eprl.product_id
 
-                /* ================= RECEIVED (AGGREGATED) ================= */
+                LEFT JOIN purchase_order po
+                    ON po.id = pol.order_id
+                   AND po.custom_requisition_id = epr.id
+
+                /* ================= RECEIVED (ONLY PO ITEMS) ================= */
                 LEFT JOIN LATERAL (
                     SELECT
                         MIN(sp.date_done::date) AS received_date,
@@ -621,13 +759,14 @@ class KpiPartsReport(models.Model):
                     JOIN stock_picking sp ON sp.id = sm.picking_id
                     JOIN stock_picking_type spt ON spt.id = sp.picking_type_id
                     WHERE
-                        spt.code = 'incoming'
+                        po.id IS NOT NULL
+                        AND spt.code = 'incoming'
                         AND sp.state = 'done'
                         AND sm.product_id = eprl.product_id
                         AND sp.origin = po.name
                 ) recv ON TRUE
 
-                /* ================= ISSUED (AGGREGATED) ================= */
+                /* ================= ISSUED ================= */
                 LEFT JOIN LATERAL (
                     SELECT
                         MIN(sp2.date_done::date) AS issue_date,
@@ -643,7 +782,6 @@ class KpiPartsReport(models.Model):
                 ) issue ON TRUE
             )
         """)
-
 
 
 
