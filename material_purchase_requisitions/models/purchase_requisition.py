@@ -15,6 +15,10 @@ class MaterialPurchaseRequisition(models.Model):
     #_inherit = ['mail.thread', 'ir.needaction_mixin']
     _inherit = ['mail.thread', 'mail.activity.mixin', 'portal.mixin']      # odoo11
     _order = 'id desc'
+    _sql_constraints = [
+        ('name_unique', 'unique(name)', 'Requisition number must be unique!')
+    ]
+
 
     # vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
     vehicle_id = fields.Many2one('fleet.vehicle',string="Vehicle")
@@ -319,19 +323,30 @@ class MaterialPurchaseRequisition(models.Model):
     #     res = super(MaterialPurchaseRequisition, self).create(vals)
     #     return res
 
+    # @api.model
+    # def create(self, vals):
+    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
+    #
+    #     vals.update({
+    #         'name': name,
+    #         'is_created': True,
+    #     })
+    #
+    #     res = super(MaterialPurchaseRequisition, self).create(vals)
+    #     return res
+
+# jan30 use above code just needed
     @api.model
     def create(self, vals):
-        name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
+        # 🔐 Name already do not touch
+        if not vals.get('name') or vals.get('name') == _('New'):
+            vals['name'] = self.env['ir.sequence'].next_by_code(
+                'purchase.requisition.seq'
+            )
 
-        vals.update({
-            'name': name,
-            'is_created': True,
-        })
+        vals['is_created'] = True
 
-        res = super(MaterialPurchaseRequisition, self).create(vals)
-        return res
-
-
+        return super(MaterialPurchaseRequisition, self).create(vals)
 
     @api.constrains('department_id', 'vehicle_name', 'vin_sn')
     def _check_vehicle_required(self):
