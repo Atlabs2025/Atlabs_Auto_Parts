@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+
+	<record model="ir.module.category" id="of_account_statement.module_of_account_statement">
+        <field name="name">Account Statements</field>
+        <field name="sequence">99</field>
+    </record>
+    
+    <record id="group_of_account_statement_user" model="res.groups">
+        <field name="name">Account Statement User</field>
+        <field name="comment">The user will be able to see and print Account Statement.</field>
+        <field name="category_id" ref="of_account_statement.module_of_account_statement"/>
+    </record>
+    
+</odoo>
