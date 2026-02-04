@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="mail_template_cust_overdue" model="mail.template">
+            <field name="name">Customer Overdue: Email</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="subject">Customer Overdue : {{object.name}}</field>
+            <field name="email_from">{{user.email}}</field>
+            <field name="email_to">{{object.email}}</field>
+            <field name="body_html" type="html">
+                <![CDATA[
+                <div style="margin:0; padding:0;">
+                    <p>Dear <strong t-esc="object.name or ''"/></p>
+                    <p>
+                        Exception made if there was a mistake of ours, it seems that the following amount stays unpaid. Please, take appropriate measures in order to carry out this payment as early as possible. Would your payment have been carried out after this mail was sent, please ignore this message. Do not hesitate to contact us.
+                    </p>
+                    <br/>
+                    Best Regards,<br/>
+                    <strong t-esc="user.name or ''"/><br/>
+                    <strong t-esc="user.company_id.name or ''"/>
+                </div>
+                ]]>
+            </field>
+            <field name="report_template" ref="of_account_statement.action_report_customer_overdue_report"/>
+            <field name="report_name">Customer Overdue : {{object.name}}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Customer Statement Email Template -->
+        <record id="mail_template_cust_statement" model="mail.template">
+            <field name="name">Customer Statement: Email</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="subject">Customer Statement : {{object.name}}</field>
+            <field name="email_from">{{user.email}}</field>
+            <field name="email_to">{{object.email}}</field>
+            <field name="body_html" type="html">
+                <![CDATA[
+                <div style="margin:0; padding:0;">
+                    <p>Dear <strong t-esc="object.name or ''"/></p>
+                    <p>
+                        Kindly check attached Customer Statement. In case of any query, do not hesitate to contact us.
+                    </p>
+                    <br/>
+                    Best Regards,<br/>
+                    <strong t-esc="user.name or ''"/><br/>
+                    <strong t-esc="user.company_id.name or ''"/>
+                </div>
+                ]]>
+            </field>
+            <field name="report_template" ref="of_account_statement.action_report_customer_statement_report"/>
+            <field name="report_name">Customer Statement : {{object.name}}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Supplier Statement Email Template -->
+        <record id="mail_template_supp_statement" model="mail.template">
+            <field name="name">Supplier/Vendor Statement: Email</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="subject">Supplier/Vendor Statement : {{object.name}}</field>
+            <field name="email_from">{{user.email}}</field>
+            <field name="email_to">{{object.email}}</field>
+            <field name="body_html" type="html">
+                <![CDATA[
+                <div style="margin:0; padding:0;">
+                    <p>Dear <strong t-esc="object.name or ''"/></p>
+                    <p>
+                        Kindly check attached Supplier/Vendor Statement. In case of any query, do not hesitate to contact us.
+                    </p>
+                    <br/>
+                    Best Regards,<br/>
+                    <strong t-esc="user.name or ''"/><br/>
+                    <strong t-esc="user.company_id.name or ''"/>
+                </div>
+                ]]>
+            </field>
+            <field name="report_template" ref="of_account_statement.action_report_supplier_statement_report"/>
+            <field name="report_name">Supplier/Vendor Statement : {{object.name}}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

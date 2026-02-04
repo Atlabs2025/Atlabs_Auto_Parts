@@ -1,0 +1,124 @@
+<odoo>
+    <data>
+        <record id="view_partner_form_inherited_acc_state" model="ir.ui.view">
+            <field name="name">view.partner.inherited.acc.state</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='internal_notes']" position="after">
+                           <action name="dynamic.pl"/>
+                    <page name="cust_state" string="Customer Statement" groups="of_account_statement.group_of_account_statement_user">
+                        <action name="dynamic.pl"/>
+                        <div class="oe_right" name="cust_followup_button">
+                            <button name="do_print_cust_state" type="object" string="Print Customer Statement" help="Print Customer Statement report" groups="of_account_statement.group_of_account_statement_user"/>
+                            <button name="do_print_cust_state_excel" type="object" string="Print Customer Statement Excel" help="Print Customer Statement report" groups="of_account_statement.group_of_account_statement_user"/>
+                            <button name="do_print_cust_due_state" type="object" string="Print Overdue Payments" help="Print Customer overdue payments report" modifiers="{'invisible':[('cust_total_overdue_amount', '&lt;=', 0.0)]}" groups="of_account_statement.group_of_account_statement_user"/>
+<!--                            <button name="action_cust_due_send" type="object" string="Email Overdue Payments To Customer" help="Send Email to Customer overdue payments report" modifiers="{'invisible':[('cust_total_overdue_amount', '&lt;=', 0.0)]}" groups="of_account_statement.group_of_account_statement_user"  class="btn-primary"/>-->
+                            <br/>
+<!--                            <button name="action_cust_state_send" type="object" string="Email Customer Statement" help="Send Email to Customer Statement report" groups="of_account_statement.group_of_account_statement_user"  class="btn-primary"/>-->
+                        </div>
+                        <h4>
+                            Customer Statement Details
+                        </h4>
+                        <group>
+                            <group>
+                                <field name="cust_from_date"/>
+                            </group>
+                            <group>
+                                <field name="cust_to_date"/>
+<!--                                <field name="duplicate_bank_partner_ids"/>-->
+                            </group>
+                        </group>
+                        <field name="customer_statement_ids" nolabel="1" readonly="1" force_save="1">
+                            <list editable="bottom">
+                                <field name="bill_date"/>
+                                <field name="month"/>
+                                <field name="reference"/>
+                                <field name="bill_reference"/>
+                                <field name="company"/>
+                                <field name="due_date"/>
+                                <field name="debit"/>
+                                <field name="credit"/>
+                                 <field name="balance"/>
+                                <field name="status"/>
+                            </list>
+                        </field>
+                        <field name="cust_acc_stat_line_ids" readonly="1" force_save="1">
+                            <list>
+                                <field name="invoice_date" string="Invoice Date"/>
+                                <field name="month" string="Month"/>
+                                <field name="name" string="Reference"/>
+                                <field name="company_id"/>
+                                <field name="invoice_date_due" string="Due Date"/>
+                                <field name="amount_total_signed" string="Amount" sum="Total"/>
+                                <field name="paid_amount" string="Amount Paid" sum="Total"/>
+                                <field name="amount_residual" string="Amount Due" sum="Total"/>
+                                <field name="state"/>
+                                <field name="payment_state" optional="hide"/>
+
+                            </list>
+                        </field>
+                        <group class="oe_right">
+                            <field name="cust_overall_balance_due" string="Amount Due" readonly="1" force_save="1"/>
+                            <field name="cust_total_overdue_amount" readonly="1" force_save="1" string="Amount Overdue"/>
+                        </group>
+                    </page>
+                    <page name="supp_state" string="Supplier Statement" groups="of_account_statement.group_of_account_statement_user">
+                               <action name="dynamic.pl"/>
+                            <div class="oe_right" name="cust_followup_button">
+                                <button name="do_print_supp_state" type="object" string="Print Supplier Statement" help="Print Supplier Statement report" groups="of_account_statement.group_of_account_statement_user"/>
+                                <button name="do_print_supp_state_excel" type="object" string="Print Supplier Statement Excel" help="Print Supplier Statement report" groups="of_account_statement.group_of_account_statement_user"/>
+                                <button name="do_print_supp_due_state" type="object" string="Print Overdue Payments" help="Print Supplier overdue payments report" modifiers="{'invisible':[('supp_total_overdue_amount', '&lt;=', 0.0)]}" groups="of_account_statement.group_of_account_statement_user"/>
+<!--                                <button name="action_supp_state_send" type="object" string="Email Supplier Statement" help="Send Email to Supplier Statement report" groups="of_account_statement.group_of_account_statement_user"  class="btn-primary"/>-->
+                            </div>
+                            <h4>
+                                Supplier Statement Details
+                            </h4>
+                            <group>
+                                <group>
+                                    <field name="supp_from_date"/>
+                                </group>
+                                <group>
+                                    <field name="supp_to_date"/>
+                                </group>
+                            </group>
+                        <field name="supplier_statement_ids" nolabel="1" readonly="1" force_save="1">
+                            <list editable="bottom">
+                                <field name="bill_date"/>
+                                <field name="month"/>
+                                <field name="reference"/>
+                                <field name="bill_reference"/>
+                                <field name="company"/>
+                                <field name="due_date"/>
+                                <field name="debit"/>
+                                <field name="credit"/>
+                                <field name="balance"/>
+                                <field name="status"/>
+                            </list>
+                        </field>
+
+                        <field name="supp_acc_stat_line_ids" readonly="1" force_save="1">
+                            <list>
+                                <field name="invoice_date" string="Bill Date"/>
+                                <field name="month" string="Month"/>
+                                <field name="name" string="Reference"/>
+                                <field name="ref" string="Bill Reference"/>
+                                <field name="company_id"/>
+                                <field name="invoice_date_due" string="Due Date"/>
+                                <field name="amount_total_signed" string="Amount" sum="Total"/>
+                                <field name="paid_amount" string="Amount Paid" sum="Total"/>
+                                <field name="amount_residual" string="Amount Due" sum="Total"/>
+                                <field name="state"/>
+                                <field name="payment_state" optional="hide"/>
+                            </list>
+                        </field>
+                        <group class="oe_right">
+                            <field name="supp_overall_balance_due" string="Amount Due" readonly="1" force_save="1"/>
+                            <field name="supp_total_overdue_amount" readonly="1" force_save="1" string="Amount Overdue"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+     </data>
+</odoo>

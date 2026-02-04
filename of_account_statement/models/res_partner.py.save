@@ -1,0 +1,269 @@
+# -*- coding: utf-8 -*-
+import datetime
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError, UserError
+
+
+class AccountInvoice(models.Model):
+    _inherit = "account.move"
+    _description = "Account Move Paid Amounts"
+
+    paid_amount = fields.Monetary(string='Paid Amount', compute='_compute_paid_amount', store=True, help="Paid Amount.")
+    month = fields.Char(string="Month", compute='_compute_month', store=True)
+
+    @api.onchange('invoice_date')
+    @api.depends('invoice_date')
+    def _compute_month(self):
+        for rec in self:
+            if rec.invoice_date:
+                rec.month = rec.invoice_date.strftime("%B")
+
+    @api.depends('amount_residual')
+    def _compute_paid_amount(self):
+        for inv in self:
+            inv.paid_amount = 0.0
+            if inv.state != 'draft':
+                inv.paid_amount = inv.amount_total - inv.amount_residual
+                
+                
+class Partner(models.Model):
+    _inherit = "res.partner"
+    @api.depends('cust_acc_stat_line_ids','cust_acc_stat_line_ids.invoice_date_due','cust_acc_stat_line_ids.amount_residual')
+    def _get_cust_amounts_and_date(self):
+        company = self.env.user.company_id
+        current_date = fields.Date.today()
+        for partner in self:
+            due_date = False
+            amount_due = amount_overdue = 0.0
+            for aml in partner.cust_acc_stat_line_ids:
+                due_date = aml.invoice_date_due
+                if (aml.company_id == company):
+                    if not due_date:
+                        due_date = aml.date or aml.invoice_date
+                    amount_due += aml.amount_residual
+                    if (due_date <= current_date):
+                        amount_overdue += aml.amount_residual
+            partner.cust_overall_balance_due = amount_due
+            partner.cust_total_overdue_amount = amount_overdue
+    
+    @api.depends('supp_acc_stat_line_ids','supp_acc_stat_line_ids.invoice_date_due','supp_acc_stat_line_ids.amount_residual')
+    def _get_supp_amounts_and_date(self):
+        company = self.env.user.company_id
+        current_date = fields.Date.today()
+        for partner in self:
+            due_date = False
+            amount_due = amount_overdue = 0.0
+            for aml in partner.supp_acc_stat_line_ids:
+                due_date = aml.invoice_date_due
+                if (aml.company_id == company):
+                    amount_due += aml.amount_residual
+                    if not due_date:
+                        due_date = aml.date or aml.invoice_date
+                    if (due_date <= current_date):
+                        amount_overdue += aml.amount_residual
+            partner.supp_overall_balance_due = amount_due
+            partner.supp_total_overdue_amount = amount_overdue
+            
+#    cust_acc_stat_line_ids = fields.One2many("account.move", "partner_id", string="Customer Account Statement", auto_join=True, domain=[('state','=','posted'),('move_type', 'in', ['out_invoice', 'out_refund', 'out_receipt'])])
+    cust_acc_stat_line_ids = fields.Many2many("account.move", string="Customer Account Statement", compute="compute_cust_statement_lines")
+    supp_acc_stat_line_ids = fields.Many2many("account.move", string="Supplier Account Statement", compute="compute_supplier_statement_lines")
+#    supp_acc_stat_line_ids = fields.One2many("account.move", "partner_id", string="Supplier Account Statement", auto_join=True, domain=[('state','=','posted'),('move_type','in',['in_invoice', 'in_refund','in_receipt'])])
+    
+    cust_overall_balance_due = fields.Float(compute='_get_cust_amounts_and_date')
+    cust_total_overdue_amount = fields.Float(compute='_get_cust_amounts_and_date')
+    
+    supp_overall_balance_due = fields.Float(compute='_get_supp_amounts_and_date')
+    supp_total_overdue_amount = fields.Float(compute='_get_supp_amounts_and_date')
+    monthly_search = fields.Selection([('January', 'January'), ('February', 'February'),
+                                       ('March', 'March'), ('April', 'April'), ('May', 'May'),
+                                       ('June', 'June'), ('July', 'July'), ('August', 'August'),
+                                       ('September', 'September'), ('October', 'October'),
+                                       ('November', 'November'), ('December', 'December')], 'Search Filter')
+    supplier_monthly_search = fields.Selection([('January', 'January'), ('February', 'February'),
+                                       ('March', 'March'), ('April', 'April'), ('May', 'May'),
+                                       ('June', 'June'), ('July', 'July'), ('August', 'August'),
+                                       ('September', 'September'), ('October', 'October'),
+                                       ('November', 'November'), ('December', 'December')], 'Search Filter')
+    cust_from_date = fields.Date(string="From Date")
+    cust_to_date = fields.Date(string="To Date")
+    supp_from_date = fields.Date(string="From Date")
+    supp_to_date = fields.Date(string="To Date")
+
+    @api.onchange('cust_from_date', 'cust_to_date')
+    @api.depends('cust_from_date', 'cust_to_date')
+    def compute_cust_statement_lines(self):
+        """
+        This method updates the domain for the cust_acc_stat_line_ids based on the search.
+        """
+        for rec in self:
+            if rec.cust_from_date and rec.cust_to_date:
+                rec.cust_acc_stat_line_ids = [(5, 0, 0)]
+                new_invoices = self.env['account.move'].search(
+                    [('state', '=', 'posted'), ('move_type', 'in', ['out_invoice', 'out_refund', 'out_receipt']),
+                     ('invoice_date', '>=', rec.cust_from_date), ('invoice_date', '<=', rec.cust_to_date), 
+('partner_id', '=', rec.id)], order="invoice_date")
+                rec.cust_acc_stat_line_ids = [(4, invoice.id) for invoice in new_invoices]
+            else:
+                new_invoices = self.env['account.move'].search(
+                    [('state', '=', 'posted'), ('move_type', 'in', ['out_invoice', 'out_refund', 'out_receipt']),
+                     ('partner_id', '=', self.id)], order="invoice_date")
+                rec.cust_acc_stat_line_ids = [(4, invoice.id) for invoice in new_invoices]
+
+
+    @api.onchange('supp_from_date', 'supp_to_date')
+    @api.depends('supp_from_date', 'supp_to_date')
+    def compute_supplier_statement_lines(self):
+        """
+        This method updates the domain for the cust_acc_stat_line_ids based on the search.
+        """
+        for rec in self:
+            if rec.supp_from_date and rec.supp_to_date:
+                rec.supp_acc_stat_line_ids = [(5, 0, 0)]
+                new_invoices = self.env['account.move'].search(
+                    [('state', '=', 'posted'), ('move_type', 'in', ['in_invoice', 'in_refund', 'in_receipt']),
+                     ('invoice_date', '>=', rec.supp_from_date), ('invoice_date', '<=', rec.supp_to_date), ('partner_id', '=', rec.id)], order="invoice_date")
+                rec.supp_acc_stat_line_ids = [(4, invoice.id) for invoice in new_invoices]
+            else:
+                new_invoices = self.env['account.move'].search(
+                    [('state', '=', 'posted'), ('move_type', 'in', ['in_invoice', 'in_refund', 'in_receipt']),
+                     ('partner_id', '=', self.id)], order="invoice_date")
+                rec.supp_acc_stat_line_ids = [(4, invoice.id) for invoice in new_invoices]
+
+    # @api.onchange('monthly_search')
+    # @api.depends('monthly_search')
+    # def compute_cust_statement_lines(self):
+    #     """
+    #     This method updates the domain for the cust_acc_stat_line_ids based on the search.
+    #     """
+    #     for rec in self:
+    #         if rec.monthly_search:
+    #             rec.cust_acc_stat_line_ids = [(5, 0, 0)]  # Clear existing lines
+    #             new_invoices = self.env['account.move'].search(
+    #                 [('state', '=', 'posted'), ('move_type', 'in', ['out_invoice', 'out_refund', 'out_receipt']),
+    #                  ('month', 'ilike', self.monthly_search), ('partner_id', '=', self.id)])
+    #             if new_invoices:
+    #                 rec.cust_acc_stat_line_ids = [(4, invoice.id) for invoice in new_invoices]
+    #         else:
+    #             rec.cust_acc_stat_line_ids = [(5, 0, 0)]
+    #             new_invoices = self.env['account.move'].search(
+    #                 [('state', '=', 'posted'), ('move_type', 'in', ['out_invoice', 'out_refund', 'out_receipt']),
+    #                  ('partner_id', '=', self.id)])
+    #             if new_invoices:
+    #                 rec.cust_acc_stat_line_ids = [(4, invoice.id) for invoice in new_invoices]
+
+
+    # @api.onchange('supplier_monthly_search')
+    # @api.depends('supplier_monthly_search')
+    # def compute_supplier_statement_lines(self):
+    #     """
+    #     This method updates the domain for the cust_acc_stat_line_ids based on the search.
+    #     """
+    #     for rec in self:
+    #         if rec.supplier_monthly_search:
+    #             rec.supp_acc_stat_line_ids = [(5, 0, 0)]  # Clear existing lines
+    #             new_bills = self.env['account.move'].search(
+    #                 [('state', '=', 'posted'), ('move_type', 'in', ['in_invoice', 'in_refund', 'in_receipt']),
+    #                  ('month', 'ilike', self.supplier_monthly_search), ('partner_id', '=', self.id)])
+    #             if new_bills:
+    #                 rec.supp_acc_stat_line_ids = [(4, bill.id) for bill in new_bills]
+    #         else:
+    #             rec.supp_acc_stat_line_ids = [(5, 0, 0)]
+    #             new_bills = self.env['account.move'].search(
+    #                 [('state', '=', 'posted'), ('move_type', 'in', ['in_invoice', 'in_refund', 'in_receipt']),
+    #                  ('partner_id', '=', self.id)])
+    #             if new_bills:
+    #                 rec.supp_acc_stat_line_ids = [(4, bill.id) for bill in new_bills]
+
+
+    def do_print_cust_due_state(self):
+        return self.env.ref('of_account_statement.action_report_customer_overdue_report').sudo().report_action(self.id)
+    def do_print_cust_state(self):
+        return self.env.ref('of_account_statement.action_report_customer_statement_report').sudo().report_action(self.id)
+    
+    def do_print_supp_due_state(self):
+        return self.env.ref('of_account_statement.action_report_supplier_overdue_report').sudo().report_action(self.id)
+    def do_print_supp_state(self):
+        return self.env.ref('of_account_statement.action_report_supplier_statement_report').sudo().report_action(self.id)
+
+    def action_cust_due_send(self):
+        ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
+        self.ensure_one()
+        template_id =self.env.ref('of_account_statement.mail_template_cust_overdue').id
+        lang = self.env.context.get('lang')
+        template = self.env['mail.template'].browse(template_id)
+        if template.lang:
+            lang = template._render_lang(self.ids)[self.id]
+        ctx = {
+            'default_model': 'res.partner',
+            'default_res_id' : self.id,
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode' : 'comment',
+            'force_email' : True
+        }
+
+        return {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(False, 'form')],
+            'view_id': False,
+            'target': 'new',
+            'context': ctx,
+        }
+
+
+    def action_cust_state_send(self):
+        ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
+        self.ensure_one()
+        template_id =self.env.ref('of_account_statement.mail_template_cust_statement').id
+        lang = self.env.context.get('lang')
+        template = self.env['mail.template'].browse(template_id)
+        if template.lang:
+            lang = template._render_lang(self.ids)[self.id]
+        ctx = {
+            'default_model': 'res.partner',
+            'default_res_id' : self.id,
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode' : 'comment',
+            'force_email' : True
+        }
+
+        return {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(False, 'form')],
+            'view_id': False,
+            'target': 'new',
+            'context': ctx,
+        }
+
+
+    def action_supp_state_send(self):
+        ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
+        self.ensure_one()
+        template_id =self.env.ref('of_account_statement.mail_template_supp_statement').id
+        lang = self.env.context.get('lang')
+        template = self.env['mail.template'].browse(template_id)
+        if template.lang:
+            lang = template._render_lang(self.ids)[self.id]
+        ctx = {
+            'default_model': 'res.partner',
+            'default_res_id' : self.id,
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode' : 'comment',
+            'force_email' : True
+        }
+
+        return {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(False, 'form')],
+            'view_id': False,
+            'target': 'new',
+            'context': ctx,
+        }
