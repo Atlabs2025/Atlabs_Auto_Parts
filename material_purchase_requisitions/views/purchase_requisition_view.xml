@@ -119,6 +119,18 @@
                                                decoration-success="parts_state == 'approved'"
                                                decoration-danger="parts_state == 'not_approved'"/>
 
+<!--                                        new modification on feb 09-->
+                                        <button name="action_cancel_line"
+                                                type="object"
+                                                string="Cancel"
+                                                class="btn-success"
+                                                invisible="is_cancelled"/>
+
+                                        <field name="line_status"
+                                               widget="badge"
+                                               decoration-danger="line_status == 'cancelled'"
+                                               invisible="not is_cancelled"/>
+
 
                                     </list>
                                 </field>

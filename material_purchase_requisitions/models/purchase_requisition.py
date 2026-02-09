@@ -362,7 +362,9 @@ class MaterialPurchaseRequisition(models.Model):
 
         rfq_line_vals = []
 
-        for line in self.requisition_line_ids:
+        # for line in self.requisition_line_ids:
+        # feb09 added line
+        for line in self.requisition_line_ids.filtered(lambda l: not l.is_cancelled):
             # Skip any line that already had a picking created
             if getattr(line, 'picking_created', False):
                 continue
@@ -528,103 +530,7 @@ class MaterialPurchaseRequisition(models.Model):
 
 
 
-# new function added for partial approve if any line has no stock on dec3
-#     def user_approve(self):
-#         stock_picking = self.env['stock.picking']
-#         stock_move = self.env['stock.move']
-#         picking_type_obj = self.env['stock.picking.type']
-#
-#         for rec in self:
-#
-#             rec.userrapp_date = fields.Date.today()
-#             rec.approve_employee_id = self.env['hr.employee'].search(
-#                 [('user_id', '=', self.env.uid)], limit=1
-#             )
-#
-#             # -----------------------------------------------------
-#             # ✔ Determine state: approve or partial
-#             # -----------------------------------------------------
-#             lines = rec.requisition_line_ids
-#             all_stock = all(line.is_stock for line in lines)
-#
-#             if all_stock:
-#                 rec.state = 'approve'
-#             else:
-#                 rec.state = 'partial'
-#
-#             # ✔ Create picking only for lines having is_stock = True
-#             stock_lines = lines.filtered(lambda l: l.is_stock and not l.picking_created)
-#
-#             if not stock_lines:
-#                 continue
-#
-#             delivery_type = picking_type_obj.search([('code', '=', 'outgoing')], limit=1)
-#             if not delivery_type:
-#                 raise UserError('No outgoing picking type found.')
-#
-#             source_location = delivery_type.default_location_src_id
-#             dest_location = delivery_type.default_location_dest_id
-#
-#             picking = stock_picking.sudo().create({
-#                 'picking_type_id': delivery_type.id,
-#                 'location_id': source_location.id,
-#                 'location_dest_id': dest_location.id,
-#                 'origin': rec.name,
-#                 'company_id': rec.company_id.id,
-#                 'custom_requisition_id': rec.id,
-#                 'hide_in_requisition': False,
-#
-#                 #Added vehicle details
-#                 'car_id': rec.car_id.id if rec.car_id else False,
-#                 'vin_sn': rec.vin_sn or False,
-#                 'vehicle_name': rec.vehicle_name or False,
-#             })
-#
-#             for line in stock_lines:
-#                 stock_move.sudo().create({
-#                     'name': line.product_id.display_name,
-#                     'product_id': line.product_id.id,
-#                     'product_uom_qty': line.qty,
-#                     'product_uom': line.uom.id if line.uom else line.product_id.uom_id.id,
-#                     'location_id': source_location.id,
-#                     'location_dest_id': dest_location.id,
-#                     'picking_id': picking.id,
-#                     'company_id': rec.company_id.id,
-#                     # newly added car_id for moves history view
-#                     # 'car_id': rec.car_id.id if rec.car_id else False,
-#                 })
-#
-#                 # Mark line as picked
-#                 line.picking_created = True
-#
-#             picking.action_confirm()
-#             picking.action_assign()
-#
-#             for move in picking.move_ids_without_package:
-#                 if move.state not in ('done', 'cancel'):
-#                     if not move.move_line_ids:
-#                         self.env['stock.move.line'].sudo().create({
-#                             'move_id': move.id,
-#                             'product_id': move.product_id.id,
-#                             'product_uom_id': move.product_uom.id,
-#                             'quantity': move.product_uom_qty,
-#                             'location_id': move.location_id.id,
-#                             'location_dest_id': move.location_dest_id.id,
-#                             'company_id': move.company_id.id,
-#                             # newly added car_id for moves history view
-#                             'car_id': rec.car_id.id,
-#                         })
-#                     else:
-#                         move.move_line_ids.write({'quantity': move.product_uom_qty})
-#
-#             picking.button_validate()
-#
-#             # ✔ Assign car_id to ALL move lines, even auto-generated ones.newly added car_id for moves history view
-#             # ----------------------------------------------------------
-#             for move in picking.move_ids_without_package:
-#                 move.move_line_ids.write({'car_id': rec.car_id.id})
-#
-#         return True
+
 
 # jan2 function for stock reducing in the stock_qty field for non inventory items
 #     def user_approve(self):
@@ -765,8 +671,12 @@ class MaterialPurchaseRequisition(models.Model):
                 [('user_id', '=', self.env.uid)], limit=1
             )
 
+            # lines = rec.requisition_line_ids.filtered(
+            #     lambda l: l.requisition_type == 'purchase'
+            # )
+       # feb 09 added line
             lines = rec.requisition_line_ids.filtered(
-                lambda l: l.requisition_type == 'purchase'
+                lambda l: l.requisition_type == 'purchase' and not l.is_cancelled
             )
 
             if not lines:

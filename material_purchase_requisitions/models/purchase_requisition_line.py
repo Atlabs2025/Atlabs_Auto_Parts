@@ -98,6 +98,23 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
     to_pick = fields.Boolean(string="Pick Now",default=True)
 
+ # new fields and functions added on feb 09
+    is_cancelled = fields.Boolean(default=False)
+
+    line_status = fields.Selection([
+        ('active', 'Active'),
+        ('cancelled', 'Cancelled'),
+    ], default='active')
+
+    def action_cancel_line(self):
+        for rec in self:
+            rec.is_cancelled = True
+            rec.line_status = 'cancelled'
+
+
+
+
+
     @api.depends('stock_qty')
     def _compute_is_stock(self):
         for line in self:
