@@ -135,7 +135,10 @@
                                         <field name="line_status"
                                                widget="badge"
                                                decoration-danger="line_status == 'cancelled'"
-                                               column_invisible="not is_cancelled"/>
+                                               column_invisible="context.get('not is_cancelled')"/>
+<!--                                        column_invisible="context.get('is_cancelled', False)"-->
+
+
 
 
                                     </list>
