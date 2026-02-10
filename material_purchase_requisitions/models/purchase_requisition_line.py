@@ -152,7 +152,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         for rec in self:
-            rec.lot_id = False  # 🔥 IMPORTANT
+            rec.lot_id = False  # IMPORTANT
 
             if not rec.product_id:
                 rec.description = False
@@ -185,7 +185,7 @@ class MaterialPurchaseRequisitionLine(models.Model):
     def _onchange_requisition_type(self):
         for rec in self:
             if rec.requisition_type == 'internal':
-                # 🔥 VERY IMPORTANT
+                # VERY IMPORTANT
                 rec.lot_id = False
 
             rec.product_id = False
@@ -248,11 +248,13 @@ class MaterialPurchaseRequisitionLine(models.Model):
 # added function on jan 19 for restricting the editing after save
     @api.model
     def create(self, vals):
+        if self.env.user.has_group('material_purchase_requisitions.group_mpr_line_edit'):
+            return super().create(vals)
         requisition_id = vals.get('requisition_id')
         if requisition_id:
             req = self.env['material.purchase.requisition'].browse(requisition_id)
 
-            # 🔥 AFTER FIRST SAVE ONLY
+            #  AFTER FIRST SAVE ONLY
             if req.create_date and req.write_date and req.write_date > req.create_date:
                 raise ValidationError(
                     "You cannot add lines after saving the requisition."
@@ -272,12 +274,15 @@ class MaterialPurchaseRequisitionLine(models.Model):
 
 
     def write(self, vals):
-        # ✅ Always allow ONLY to_pick toggle
+        # Always allow ONLY to_pick toggle
         if set(vals.keys()) == {'to_pick'}:
             return super().write(vals)
 
-        # ✅ Allow approval flow
+        # Allow approval flow
         if self.env.context.get('skip_line_lock'):
+            return super().write(vals)
+
+        if self.env.user.has_group('material_purchase_requisitions.group_mpr_line_edit'):
             return super().write(vals)
 
         for line in self:
@@ -303,7 +308,7 @@ class ProductProduct(models.Model):
             if category:
                 vals['categ_id'] = category.id
 
-            # 🔥 IMPORTANT PART
+            # IMPORTANT PART
             vals['tracking'] = 'lot'  # 👈 Track by Lot
 
         return super(ProductProduct, self).create(vals)
@@ -316,7 +321,7 @@ class ProductProduct(models.Model):
             if category:
                 vals['categ_id'] = category.id
 
-            # 🔥 ensure tracking stays lot
+            # ensure tracking stays lot
             vals['tracking'] = 'lot'
 
         return super(ProductProduct, self).write(vals)
