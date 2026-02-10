@@ -126,10 +126,16 @@
                                                 class="btn-success"
                                                 invisible="is_cancelled"/>
 
+<!--                                        <field name="line_status"-->
+<!--                                               widget="badge"-->
+<!--                                               decoration-danger="line_status == 'cancelled'"-->
+<!--                                               invisible="not is_cancelled"/>-->
+
+
                                         <field name="line_status"
                                                widget="badge"
                                                decoration-danger="line_status == 'cancelled'"
-                                               invisible="not is_cancelled"/>
+                                               column_invisible="not is_cancelled"/>
 
 
                                     </list>
