@@ -368,20 +368,38 @@ class PurchaseOrder(models.Model):
     #
     #     return res
 
+    # def button_approve(self, force=False):
+    #     res = super(PurchaseOrder, self).button_approve(force)
+    #
+    #     for po in self:
+    #         if po.material_requisition_id:
+    #             # Update requisition state
+    #             po.material_requisition_id.state = 'purchase'
+    #
+    #             # ⭐ Update PO number field
+    #             po.material_requisition_id.po_id = po.id
+    #
+    #     return res
+    #
+    #
+
     def button_approve(self, force=False):
-        res = super(PurchaseOrder, self).button_approve(force)
+        res = super().button_approve(force)
 
         for po in self:
-            if po.material_requisition_id:
-                # Update requisition state
-                po.material_requisition_id.state = 'purchase'
+            req = po.material_requisition_id
+            if not req:
+                continue
 
-                # ⭐ Update PO number field
-                po.material_requisition_id.po_id = po.id
+            # update state
+            req.state = 'purchase'
+
+            # assign to slots
+            if not req.po_id_1:
+                req.po_id_1 = po.id
+            elif not req.po_id_2:
+                req.po_id_2 = po.id
 
         return res
-
-
-
 
 

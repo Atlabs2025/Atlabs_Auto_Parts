@@ -31,7 +31,7 @@
 
 
                         <field name="state" widget="statusbar" string="confirm"  
-                                        statusbar_visible="draft,partial,rfq,dept_confirm,ir_approve,approve,purchase"/>
+                                        statusbar_visible="draft,partial,rfq,dept_confirm,ir_approve,approve,purchase,received,partially_closed,closed"/>
                     </header>
                     <field name="is_locked" invisible="1"/>
 <!--                <sheet modifiers="{'readonly': [('is_locked', '=', True)]}">-->
@@ -202,14 +202,13 @@
                     <field name="date_end"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="state"/>
-                    <field name="po_id" widget="many2one"/>
+<!--                    <field name="po_id" widget="many2one"/>-->
+<!--       added on feb 13-->
+                    <field name="po_id_1" widget="many2one"/>
+                    <field name="po_id_2" widget="many2one"/>
+
+
                     <field name="rfq_number"/>
-
-
-
-
-
-
 
 
                 </list>
