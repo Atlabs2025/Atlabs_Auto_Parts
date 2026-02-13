@@ -52,7 +52,8 @@ class StockPicking(models.Model):
 
 
 
-# dec 30 for lot displaying
+
+# code added on january27 and above code commented
 #     def button_validate(self):
 #
 #         for picking in self:
@@ -90,7 +91,7 @@ class StockPicking(models.Model):
 #
 #                 lot = req_line[0].lot_id
 #
-#                 # 🔹 Create / update move lines
+#                 # 🔹 Create / update move lines (NO QUANTITY)
 #                 if not move.move_line_ids:
 #                     self.env['stock.move.line'].sudo().create({
 #                         'move_id': move.id,
@@ -99,25 +100,24 @@ class StockPicking(models.Model):
 #                         'product_uom_id': move.product_uom.id,
 #                         'location_id': move.location_id.id,
 #                         'location_dest_id': move.location_dest_id.id,
-#                         'quantity': move.product_uom_qty,
 #                         'lot_id': lot.id,
-#                         'epr_id': req_id,  # ✅ HERE
+#                         'epr_id': req_id,
 #                     })
 #                 else:
 #                     move.move_line_ids.sudo().write({
 #                         'lot_id': lot.id,
-#                         'quantity': move.product_uom_qty,
-#                         'epr_id': req_id,  # ✅ HERE
+#                         'epr_id': req_id,
 #                     })
 #
-#         # 🔥 finally validate
+#         # 🔥 VERY IMPORTANT: let Odoo decide backorder
 #         res = super(StockPicking, self).button_validate()
 #         return res
 
 
-
-# code added on january27 and above code commented
+# feb 13 added code use above code if needed
     def button_validate(self):
+
+        requisitions_to_update = self.env['material.purchase.requisition']
 
         for picking in self:
 
@@ -130,6 +130,8 @@ class StockPicking(models.Model):
                 continue
 
             requisition = po.custom_requisition_id
+            requisitions_to_update |= requisition
+
             req_id = requisition.id
 
             # 🔹 set epr on picking
@@ -140,7 +142,6 @@ class StockPicking(models.Model):
             # 🔹 Loop through stock moves
             for move in picking.move_ids_without_package:
 
-                # 🔹 set epr on move
                 move.sudo().write({
                     'epr_id': req_id
                 })
@@ -154,7 +155,6 @@ class StockPicking(models.Model):
 
                 lot = req_line[0].lot_id
 
-                # 🔹 Create / update move lines (NO QUANTITY)
                 if not move.move_line_ids:
                     self.env['stock.move.line'].sudo().create({
                         'move_id': move.id,
@@ -172,8 +172,14 @@ class StockPicking(models.Model):
                         'epr_id': req_id,
                     })
 
-        # 🔥 VERY IMPORTANT: let Odoo decide backorder
-        res = super(StockPicking, self).button_validate()
+        #   validation/backorders
+        res = super().button_validate()
+
+        # ✅ AFTER validation → set received
+        requisitions_to_update.write({
+            'state': 'received'
+        })
+
         return res
 
 
