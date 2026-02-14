@@ -21,8 +21,8 @@ class PurchaseOrder(models.Model):
     vin_sn = fields.Char(string='VIN/SN')
 
     parts_status = fields.Selection([
-        ('received', 'Received'),
-        ('issued', 'Issued')
+        ('parts_received', ' Parts Received'),
+        ('parts_issued', 'Parts Issued')
     ], string="Parts Status")
 
 

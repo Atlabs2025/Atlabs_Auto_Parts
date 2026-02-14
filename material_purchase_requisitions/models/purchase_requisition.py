@@ -1143,7 +1143,7 @@ class MaterialPurchaseRequisition(models.Model):
             ])
 
             related_pos.write({
-                'parts_status': 'issued'
+                'parts_status': 'parts_issued'
             })
 
             # -------------------------------------------------
