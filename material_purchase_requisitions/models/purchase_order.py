@@ -20,6 +20,12 @@ class PurchaseOrder(models.Model):
     vehicle_name = fields.Char(string='Vehicle')
     vin_sn = fields.Char(string='VIN/SN')
 
+    parts_status = fields.Selection([
+        ('received', 'Received'),
+        ('issued', 'Issued')
+    ], string="Parts Status")
+
+
     @api.onchange('car_id')
     def _onchange_car_id(self):
         if self.car_id:

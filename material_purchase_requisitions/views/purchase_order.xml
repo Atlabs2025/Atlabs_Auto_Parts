@@ -70,6 +70,7 @@
                 <field name="car_id"/>
                 <field name="vehicle_name"/>
                 <field name="vin_sn"/>
+                <field name="parts_status"/>
 
 
             </xpath>
