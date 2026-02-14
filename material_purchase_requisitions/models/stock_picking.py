@@ -115,9 +115,78 @@ class StockPicking(models.Model):
 
 
 # feb 13 added code use above code if needed
+#     def button_validate(self):
+#
+#         requisitions_to_update = self.env['material.purchase.requisition']
+#
+#         for picking in self:
+#
+#             # 🔹 Get PO
+#             po = picking.purchase_id or self.env['purchase.order'].search(
+#                 [('name', '=', picking.origin)], limit=1
+#             )
+#
+#             if not po or not po.custom_requisition_id:
+#                 continue
+#
+#             requisition = po.custom_requisition_id
+#             requisitions_to_update |= requisition
+#
+#             req_id = requisition.id
+#
+#             # 🔹 set epr on picking
+#             picking.sudo().write({
+#                 'custom_requisition_id': req_id
+#             })
+#
+#             # 🔹 Loop through stock moves
+#             for move in picking.move_ids_without_package:
+#
+#                 move.sudo().write({
+#                     'epr_id': req_id
+#                 })
+#
+#                 req_line = requisition.requisition_line_ids.filtered(
+#                     lambda l: l.product_id == move.product_id and l.lot_id
+#                 )
+#
+#                 if not req_line:
+#                     continue
+#
+#                 lot = req_line[0].lot_id
+#
+#                 if not move.move_line_ids:
+#                     self.env['stock.move.line'].sudo().create({
+#                         'move_id': move.id,
+#                         'picking_id': picking.id,
+#                         'product_id': move.product_id.id,
+#                         'product_uom_id': move.product_uom.id,
+#                         'location_id': move.location_id.id,
+#                         'location_dest_id': move.location_dest_id.id,
+#                         'lot_id': lot.id,
+#                         'epr_id': req_id,
+#                     })
+#                 else:
+#                     move.move_line_ids.sudo().write({
+#                         'lot_id': lot.id,
+#                         'epr_id': req_id,
+#                     })
+#
+#         #   validation/backorders
+#         res = super().button_validate()
+#
+#         # AFTER validation → set received
+#         requisitions_to_update.write({
+#             'state': 'received'
+#         })
+#
+#         return res
+
+# feb14 function and do not remove the function before feb 13  because need to check is it applicable for multiple time purchase order making(user_approve function also need to check)
     def button_validate(self):
 
         requisitions_to_update = self.env['material.purchase.requisition']
+        purchase_orders_to_update = self.env['purchase.order']
 
         for picking in self:
 
@@ -128,6 +197,9 @@ class StockPicking(models.Model):
 
             if not po or not po.custom_requisition_id:
                 continue
+
+            # collect PO for later update
+            purchase_orders_to_update |= po
 
             requisition = po.custom_requisition_id
             requisitions_to_update |= requisition
@@ -172,12 +244,17 @@ class StockPicking(models.Model):
                         'epr_id': req_id,
                     })
 
-        #   validation/backorders
+        # 🔥 Validate (backorders handled by Odoo)
         res = super().button_validate()
 
-        # ✅ AFTER validation → set received
+        # ✅ AFTER validation → set requisition received
         requisitions_to_update.write({
             'state': 'received'
+        })
+
+        # ✅ AFTER validation → set PO parts_status = received
+        purchase_orders_to_update.write({
+            'parts_status': 'received'
         })
 
         return res
