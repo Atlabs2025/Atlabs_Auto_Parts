@@ -247,14 +247,14 @@ class StockPicking(models.Model):
         # 🔥 Validate (backorders handled by Odoo)
         res = super().button_validate()
 
-        # ✅ AFTER validation → set requisition received
+        # AFTER validation → set requisition received
         requisitions_to_update.write({
             'state': 'received'
         })
 
-        # ✅ AFTER validation → set PO parts_status = received
+        # AFTER validation → set PO parts_status = received
         purchase_orders_to_update.write({
-            'parts_status': 'received'
+            'parts_status': 'parts_received'
         })
 
         return res
