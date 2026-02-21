@@ -1,0 +1,35 @@
+<odoo>
+
+<!--    <record id="cron_inventory_sync" model="ir.cron">-->
+<!--        <field name="name">Inventory Feed Sync</field>-->
+<!--        <field name="model">vehicle.details</field>-->
+<!--        <field name="state">code</field>-->
+<!--        <field name="code">model.cron_sync_inventory_feed()</field>-->
+<!--        <field name="interval_number">12</field>-->
+<!--        <field name="interval_type">hours</field>-->
+<!--        <field name="numbercall">-1</field>-->
+<!--        <field name="active">True</field>-->
+<!--    </record>-->
+
+
+<record id="ir_cron_inventory_sync" model="ir.cron">
+    <field name="name">Inventory Feed Sync</field>
+    <field name="interval_number">12</field>
+    <field name="interval_type">hours</field>
+    <field name="model_id" ref="model_vehicle_details"/>
+    <field name="code">model.cron_sync_inventory_feed()</field>
+    <field name="state">code</field>
+    <field name="active">True</field>
+</record>
+
+
+
+
+
+</odoo>
+
+
+
+
+
+
