@@ -12,6 +12,7 @@
         "views/vehicle_google_import_view.xml",
         "views/vehicle_menu.xml",
         "data/vehicle_import_cron.xml",
+        "data/cron.xml",
 
     ],
     "installable": True,
