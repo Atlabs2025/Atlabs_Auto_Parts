@@ -5,5 +5,3 @@ access_stock_analysis_wizard,access_stock_analysis_wizard,model_stock_analysis_w
 access_stock_analysis_view,access_stock_analysis_view,model_stock_analysis_view,base.group_user,1,1,1,1
 
 
-access_contact_full,contact full,base.model_res_partner,material_purchase_requisitions.group_contact_full_access,1,1,1,1
-access_contact_view,contact view,base.model_res_partner,material_purchase_requisitions.group_contact_view_only,1,0,0,0
