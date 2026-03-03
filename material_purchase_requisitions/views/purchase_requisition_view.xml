@@ -55,7 +55,9 @@
                                 <group>
                                     <field name="employee_id" readonly="is_locked == True or is_created == True" />
 <!--                                     <field name="job_number"/>-->
-                                     <field name="car_id" readonly="is_locked == True or is_created == True"/>
+<!--                                     <field name="car_id" readonly="is_locked == True or is_created == True"/>-->
+<!--                                    commented above code for car_id field edit access-->
+                                    <field name="car_id" readonly="(is_locked or is_created) and not can_edit_car"/>
                                     <field name="department_id" readonly="is_locked == True or is_created == True"/>
                                     <field name="company_id" groups="base.group_multi_company" readonly="is_locked == True or is_created == True"/>
                                     <field name="requisiton_responsible_id" readonly="is_locked == True or is_created == True"/>
