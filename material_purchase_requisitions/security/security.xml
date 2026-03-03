@@ -81,7 +81,12 @@
 
 
 
+<!--        new group for edit car_id field-->
 
+        <record id="group_car_override" model="res.groups">
+            <field name="name">Car Field Override</field>
+            <field name="category_id" ref="base.module_category_hidden"/>
+        </record>
 
 
     </data>

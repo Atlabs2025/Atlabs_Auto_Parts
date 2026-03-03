@@ -106,6 +106,8 @@ class MaterialPurchaseRequisitionLine(models.Model):
         ('cancelled', 'Cancelled'),
     ], default='active')
 
+
+
     def action_cancel_line(self):
         for rec in self:
             rec.is_cancelled = True

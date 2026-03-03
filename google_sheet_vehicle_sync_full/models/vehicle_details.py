@@ -38,6 +38,55 @@ class VehicleDetails(models.Model):
                 if dup:
                     raise ValidationError("VIN/Serial Number already exists!")
 
+
+# use this function for printing duplicate car id records
+    # @api.constrains('car_id', 'vin_sn')
+    # def _check_duplicates(self):
+    #
+    #     if self.env.context.get('skip_duplicate_check'):
+    #         return
+    #
+    #     for rec in self:
+    #
+    #         if rec.car_id:
+    #             dup = self.search([
+    #                 ('car_id', '=', rec.car_id),
+    #                 ('id', '!=', rec.id)
+    #             ])
+    #
+    #             if dup:
+    #                 print("===== DUPLICATE CAR ID DETECTED =====")
+    #                 print("Current Record ID:", rec.id)
+    #                 print("Car ID:", rec.car_id)
+    #                 print("Duplicate Record IDs:", dup.ids)
+    #                 print("======================================")
+    #
+    #                 raise ValidationError(
+    #                     f"Car ID already exists! Duplicate IDs: {dup.ids}"
+    #                 )
+    #
+    #         if rec.vin_sn:
+    #             dup = self.search([
+    #                 ('vin_sn', '=', rec.vin_sn),
+    #                 ('id', '!=', rec.id)
+    #             ])
+    #
+    #             if dup:
+    #                 print("===== DUPLICATE VIN DETECTED =====")
+    #                 print("Current Record ID:", rec.id)
+    #                 print("VIN:", rec.vin_sn)
+    #                 print("Duplicate Record IDs:", dup.ids)
+    #                 print("===================================")
+    #
+    #                 raise ValidationError(
+    #                     f"VIN already exists! Duplicate IDs: {dup.ids}"
+    #                 )
+
+
+
+
+
+
     @api.model
     def cron_sync_inventory_feed(self):
 

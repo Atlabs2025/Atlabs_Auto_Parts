@@ -99,6 +99,8 @@ Email notifications to Department Manager, Requisition Manager for approval.
                 'hr',
                 'purchase',
                 'fleet',
+                'contacts',
+                'base',
 
 
 
