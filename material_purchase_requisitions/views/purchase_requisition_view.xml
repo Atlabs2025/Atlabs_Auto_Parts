@@ -73,7 +73,7 @@
                                     <field name="date_end" readonly="is_locked == True or is_created == True"/>
                                     <field name="vehicle_id" invisible="1"/>
 <!--                                    <field name="car_id"/>-->
-                                    <field name="vehicle_name" readonly="is_locked == True or is_created == True"/>
+                                    <field name="vehicle_name" readonly="is_locked == True or is_created == True" force_save="1"/>
                                     <field name="vin_sn" readonly="is_locked == True or is_created == True"/>
                                     <field name="requisition_deadline_type" readonly="is_locked == True or is_created == True"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" modifiers="{'readonly': [['state', 'in', ['reject','cancel','receive']]]}"/>

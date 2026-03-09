@@ -355,14 +355,7 @@ class MaterialPurchaseRequisition(models.Model):
             )
 
 
-    # @api.model
-    # def create(self, vals):
-    #     name = self.env['ir.sequence'].next_by_code('purchase.requisition.seq')
-    #     vals.update({
-    #         'name': name
-    #         })
-    #     res = super(MaterialPurchaseRequisition, self).create(vals)
-    #     return res
+
 
     # @api.model
     # def create(self, vals):
@@ -390,13 +383,21 @@ class MaterialPurchaseRequisition(models.Model):
         return super(MaterialPurchaseRequisition, self).create(vals)
 
 
+
+
+
 # newly added write function on march 9
     def write(self, vals):
-        if 'car_id' in vals:
+        if vals.get('car_id'):
             car = self.env['vehicle.details'].browse(vals['car_id'])
-            vals['vin_sn'] = car.vin_sn
-            vals['vehicle_name'] = car.title_en
-        return super().write(vals)
+            if car:
+                vals.update({
+                    'vin_sn': car.vin_sn,
+                    'vehicle_name': car.title_en,
+                })
+
+        return super(MaterialPurchaseRequisition, self).write(vals)
+
 
 
     @api.constrains('department_id', 'vehicle_name', 'vin_sn')
