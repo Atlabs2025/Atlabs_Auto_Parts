@@ -58,7 +58,7 @@ class PurchaseOrder(models.Model):
             else:
                 raise UserError("Only RFQ or Purchase Order can be sent via WhatsApp.")
 
-            # ✅ Render PDF using same style as account.invoice example
+            # Render PDF using same style as account.invoice example
             pdf_content, _ = self.env['ir.actions.report'].with_context(force_report_rendering=True)._render_qweb_pdf(
                 report_ref, res_ids=rec.id
             )
@@ -190,7 +190,7 @@ Purchase Department"""
             encoded_msg = urllib.parse.quote(message)
             whatsapp_url = f"https://web.whatsapp.com/send?phone={mobile}&text={encoded_msg}"
 
-            # ✅ Send ONE chat message to all managers (no duplicates)
+            # Send ONE chat message to all managers (no duplicates)
             bot_user = self.env.ref('base.user_root')  # System (OdooBot)
             partner_ids = manager_group.users.mapped('partner_id').ids  # all managers’ partners
 
@@ -252,7 +252,7 @@ Purchase Department"""
 #                                         existing_po_line.order_id.name
 #                                     ))
 #
-#         # ✅ IF NO DUPLICATES → CONFIRM PO
+#         # IF NO DUPLICATES → CONFIRM PO
 #         res = super(PurchaseOrder, self).button_confirm()
 #
 #         for rec in self:

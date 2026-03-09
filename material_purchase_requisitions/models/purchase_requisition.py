@@ -389,6 +389,16 @@ class MaterialPurchaseRequisition(models.Model):
 
         return super(MaterialPurchaseRequisition, self).create(vals)
 
+
+# newly added write function on march 9
+    def write(self, vals):
+        if 'car_id' in vals:
+            car = self.env['vehicle.details'].browse(vals['car_id'])
+            vals['vin_sn'] = car.vin_sn
+            vals['vehicle_name'] = car.title_en
+        return super().write(vals)
+
+
     @api.constrains('department_id', 'vehicle_name', 'vin_sn')
     def _check_vehicle_required(self):
         for rec in self:
@@ -518,7 +528,7 @@ class MaterialPurchaseRequisition(models.Model):
 #             if 'delivery_picking_id' in rec._fields:
 #                 rec.delivery_picking_id = picking.id
 #
-#             # ✅ Auto confirm, assign, and validate picking (mark as done)
+#             #  Auto confirm, assign, and validate picking (mark as done)
 #             picking.action_confirm()
 #             picking.action_assign()
 #
@@ -530,15 +540,15 @@ class MaterialPurchaseRequisition(models.Model):
 #                             'move_id': move.id,
 #                             'product_id': move.product_id.id,
 #                             'product_uom_id': move.product_uom.id,
-#                             'quantity': move.product_uom_qty,  # ✅ updated field
+#                             'quantity': move.product_uom_qty,  # updated field
 #                             'location_id': move.location_id.id,
 #                             'location_dest_id': move.location_dest_id.id,
 #                             'company_id': move.company_id.id,
 #                         })
 #                     else:
-#                         move.move_line_ids.write({'quantity': move.product_uom_qty})  # ✅ updated field
+#                         move.move_line_ids.write({'quantity': move.product_uom_qty})  #  updated field
 #
-#             # ✅ Validate picking (mark as Done)
+#             #  Validate picking (mark as Done)
 #             picking.button_validate()
 #
 #             # 🔹 Send confirmation email
