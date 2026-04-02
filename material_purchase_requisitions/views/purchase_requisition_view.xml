@@ -31,7 +31,7 @@
 
 
                         <field name="state" widget="statusbar" string="confirm"  
-                                        statusbar_visible="draft,partial,rfq,dept_confirm,ir_approve,approve,purchase,received,partially_closed,closed"/>
+                                        statusbar_visible="draft,partial,rfq,dept_confirm,ir_approve,approve,purchase,received,return,partially_closed,closed"/>
                     </header>
                     <field name="is_locked" invisible="1"/>
 <!--                <sheet modifiers="{'readonly': [('is_locked', '=', True)]}">-->

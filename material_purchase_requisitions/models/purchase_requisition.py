@@ -59,6 +59,7 @@ class MaterialPurchaseRequisition(models.Model):
     )
     state = fields.Selection([
         ('draft', 'New'),
+        ('internal_picking', 'Internal Picking'),
         ('rfq', 'RFQ'),
         ('partial', 'Partially Approved'),
         ('dept_confirm', 'Waiting Department Approval'),
@@ -70,6 +71,7 @@ class MaterialPurchaseRequisition(models.Model):
         ('reject', 'Rejected'),
         ('purchase', 'Purchase Order'),
         ('received', 'Received'),
+        ('return', 'Returned'),
         ('partially_closed', 'Partially Closed'),
         ('closed', 'Closed'),
     ],
@@ -380,7 +382,18 @@ class MaterialPurchaseRequisition(models.Model):
 
         vals['is_created'] = True
 
-        return super(MaterialPurchaseRequisition, self).create(vals)
+        record = super(MaterialPurchaseRequisition, self).create(vals)
+
+        # ✅ Check line types AFTER creation
+        line_types = record.requisition_line_ids.mapped('requisition_type')
+
+        if line_types and all(t == 'internal' for t in line_types):
+            record.state = 'internal_picking'
+        else:
+            record.state = 'draft'
+
+        return record
+
 
 
 
@@ -398,7 +411,15 @@ class MaterialPurchaseRequisition(models.Model):
 
         return super(MaterialPurchaseRequisition, self).write(vals)
 
+    @api.onchange('requisition_line_ids')
+    def _onchange_lines(self):
+        for rec in self:
+            line_types = rec.requisition_line_ids.mapped('requisition_type')
 
+            if line_types and all(t == 'internal' for t in line_types):
+                rec.state = 'internal_picking'
+            else:
+                rec.state = 'draft'
 
     @api.constrains('department_id', 'vehicle_name', 'vin_sn')
     def _check_vehicle_required(self):
