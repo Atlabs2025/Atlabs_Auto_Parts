@@ -315,3 +315,27 @@ class StockMoveLine(models.Model):
 #         related='picking_id.picking_type_id.code',
 #         store=False
 #     )
+
+
+
+class StockReturnPicking(models.TransientModel):
+    _inherit = 'stock.return.picking'
+
+    def action_create_returns(self):
+        res = super().action_create_returns()
+
+        picking = self.picking_id  # original picking
+
+        # 🔹 Get requisition
+        requisition = picking.custom_requisition_id
+
+        if not requisition:
+            requisition = picking.move_ids_without_package.mapped(
+                'purchase_line_id.order_id.custom_requisition_id'
+            )
+
+        # 🔥 SET STATE IMMEDIATELY
+        for req in requisition:
+            req.state = 'return'
+
+        return res
