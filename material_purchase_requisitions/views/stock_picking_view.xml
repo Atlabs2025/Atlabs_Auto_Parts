@@ -26,7 +26,9 @@
                 <field name="available_qty" readonly="1"/>
             </xpath>
                 <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_uom']" position="after">
-                <field name="part_location"/>
+                    <field name="standard_price"/>
+
+                    <field name="part_location"/>
 
 
             </xpath>

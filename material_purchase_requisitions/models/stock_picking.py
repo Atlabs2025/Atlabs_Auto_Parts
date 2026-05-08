@@ -279,11 +279,18 @@ class StockMove(models.Model):
         store=True,
     )
     part_location = fields.Char(string="Part Location")
+    standard_price = fields.Float(
+        string='Cost Price',
+        compute='_compute_standard_price',
+        store=False
+    )
 
+    @api.depends('product_id')
+    def _compute_standard_price(self):
+        for rec in self:
+            rec.standard_price = rec.product_id.standard_price or 0.0
 
-
-
-# changed function on december3 because stock not comming
+    # changed function on december3 because stock not comming
     @api.depends('product_id')
     def _compute_available_qty(self):
         for rec in self:
