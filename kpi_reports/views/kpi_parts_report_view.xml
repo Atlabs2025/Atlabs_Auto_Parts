@@ -31,10 +31,12 @@
                 <field name="analytic_account_id"/>
                 <field name="po_number"/>
                 <field name="po_date"/>
+                <field name="ordered_quantity"/>
                 <field name="vendor_id"/>
                 <field name="received_date"/>
                 <field name="days_to_received"/>
                 <field name="issue_date"/>
+                <field name="line_status"/>
                 <field name="total_parts_received_percentage" widget="percentage"/>
                 <field name="total_parts_issued_percentage" widget="percentage"/>
                 <field name="total_parts_available"/>

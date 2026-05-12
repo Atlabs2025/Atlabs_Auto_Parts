@@ -41,6 +41,7 @@ class KpiPartsReport(models.Model):
     parts_price = fields.Float(string="Parts Price")
     po_number = fields.Char(string="PO Number")
     po_date = fields.Date(string="PO Date")
+    ordered_quantity =  fields.Float(string="Ordered Quantity")
     vendor_id = fields.Many2one('res.partner', string="Vendor")
 
     received_date = fields.Date(string="Received Date")
@@ -53,6 +54,11 @@ class KpiPartsReport(models.Model):
         string='Nature Of Cost',
         copy=True, required=True
     )
+    line_status = fields.Selection([
+        ('active', 'Active'),
+        ('cancelled', 'Cancelled'),
+    ], string="Line Status")
+
     total_parts_received_percentage = fields.Float(
         string="Total Parts Received %",
         readonly=True
@@ -811,12 +817,14 @@ class KpiPartsReport(models.Model):
                     eprl.product_id,
                     eprl.qty AS requested_qty,
                     eprl.analytic_account_id,
+                    eprl.line_status,
 
                     /* ========= PO (ONLY ONE!) ========= */
                     po_data.po_number,
                     po_data.po_date,
                     po_data.vendor_id,
                     po_data.parts_price,
+                    po_data.ordered_quantity,
 
                     /* ========= RECEIVED ========= */
                     recv.received_date,
@@ -880,7 +888,8 @@ class KpiPartsReport(models.Model):
                         po.name AS po_number,
                         po.date_order AS po_date,
                         po.partner_id AS vendor_id,
-                        pol.price_unit AS parts_price
+                        pol.price_unit AS parts_price,
+                        pol.product_qty AS ordered_quantity
 
                     FROM purchase_order_line pol
 
@@ -893,7 +902,7 @@ class KpiPartsReport(models.Model):
 
                     ORDER BY po.id DESC
                     LIMIT 1
-
+    
                 ) po_data ON TRUE
 
                 /* ========= RECEIVED ========= */

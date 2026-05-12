@@ -50,6 +50,16 @@ class StockPicking(models.Model):
             if rec.employee_id and rec.employee_id.department_id:
                 rec.department_id = rec.employee_id.department_id.id
 
+    @api.onchange('car_id')
+    def _onchange_car_id(self):
+        for rec in self:
+            if rec.car_id:
+                rec.vehicle_name = rec.car_id.title_en or ''
+                rec.vin_sn = rec.car_id.vin_sn or ''
+            else:
+                rec.vehicle_name = False
+                rec.vin_sn = False
+
 
 
 

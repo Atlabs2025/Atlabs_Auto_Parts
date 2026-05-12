@@ -38,11 +38,12 @@ class KpiDirectIssueReport(models.Model):
     unit_price = fields.Float(string='Unit Price')
 
     total_value = fields.Float(string='Total Value')
+    taken_by = fields.Char(string='Taken By')
 
-    employee_id = fields.Many2one(
-        'hr.employee',
-        string='Taken By'
-    )
+    # employee_id = fields.Many2one(
+    #     'hr.employee',
+    #     string='Taken By'
+    # )
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -65,7 +66,7 @@ class KpiDirectIssueReport(models.Model):
 
                     sp.department_id AS department_id,
 
-                    sp.employee_id AS employee_id,
+                    sp.taken_by AS taken_by,
 
                     sm.product_id AS product_id,
 
