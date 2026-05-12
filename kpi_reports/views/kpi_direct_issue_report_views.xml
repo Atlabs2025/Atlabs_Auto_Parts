@@ -11,7 +11,7 @@
                 <field name="vin_sn"/>
                 <field name="issue_date"/>
                 <field name="department_id"/>
-                <field name="employee_id"/>
+                <field name="taken_by"/>
                 <field name="product_id"/>
                 <field name="issued_qty"/>
                 <field name="unit_price"/>
@@ -32,7 +32,7 @@
                 <field name="vin_sn"/>
                 <field name="product_id"/>
                 <field name="department_id"/>
-                <field name="employee_id"/>
+                <field name="taken_by"/>
 
                 <filter name="today"
                         string="Today"
