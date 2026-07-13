@@ -66,15 +66,37 @@
         </field>
     </record>
     <record id="view_product_template_search_custom" model="ir.ui.view">
-    <field name="name">product.template.search</field>
-    <field name="model">product.template</field>
-    <field name="inherit_id" ref="product.product_template_search_view"/>
-    <field name="arch" type="xml">
-        <xpath expr="//search" position="inside">
-            <field name="oe_number_names" string="OE Number"/>
-        </xpath>
-    </field>
-</record>
+        <field name="name">product.template.search</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="oe_number_names" string="OE Number"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_product_tree_inherit_stock_value" model="ir.ui.view">
+        <field name="name">product.product.tree.stock.value</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='qty_available']" position="after">
+                <field name="stock_value" widget="monetary"/>
+            </xpath>
+            <!-- Remove the original category field -->
+            <xpath expr="//field[@name='categ_id']" position="replace"/>
+
+             <!-- Move category before sale price -->
+            <xpath expr="//field[@name='list_price']" position="before" optional="show">
+                <field name="categ_id"/>
+            </xpath>
+
+
+
+        </field>
+    </record>
 
 
 

@@ -42,6 +42,22 @@ class ProductTemplate(models.Model):
             oe_names = rec.oe_number_line_ids.mapped('oe_number_id.name')
             rec.oe_number_names = ', '.join(oe_names)
 
+    ####Adding total stock value in product tree view - july13
+
+    stock_value = fields.Monetary(
+        string="Total",
+        compute="_compute_stock_value",
+    )
+
+    # currency_id = fields.Many2one(
+    #     related='company_id.currency_id',
+    #     readonly=True,
+    # )
+
+    @api.depends('standard_price', 'qty_available')
+    def _compute_stock_value(self):
+        for product in self:
+            product.stock_value = product.standard_price * product.qty_available
 
 
 

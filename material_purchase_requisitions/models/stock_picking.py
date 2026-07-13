@@ -13,7 +13,6 @@ class StockPicking(models.Model):
 
     )
 
-
     # newly added fields
 
     employee_id = fields.Many2one(
