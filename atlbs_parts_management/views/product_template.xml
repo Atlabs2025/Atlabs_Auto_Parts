@@ -83,7 +83,7 @@
         <field name="arch" type="xml">
 
             <xpath expr="//field[@name='qty_available']" position="after">
-                <field name="stock_value" widget="monetary"/>
+                <field name="stock_value" widget="monetary" sum="Total Value"/>
             </xpath>
             <!-- Remove the original category field -->
             <xpath expr="//field[@name='categ_id']" position="replace"/>

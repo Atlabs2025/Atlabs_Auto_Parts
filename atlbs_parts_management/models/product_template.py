@@ -47,6 +47,8 @@ class ProductTemplate(models.Model):
     stock_value = fields.Monetary(
         string="Total",
         compute="_compute_stock_value",
+        store=True,
+        group_operator="sum",
     )
 
     # currency_id = fields.Many2one(
